@@ -171,6 +171,13 @@ build_lib_for_android(){
 
 #include <stdint.h>
 
+/* Drawable types */
+typedef unsigned int drm_drawable_t;
+typedef enum {
+    DRM_DRAWABLE_CLIPRECTS
+} drm_drawable_info_type_t;
+
+/* Device types */
 typedef struct _drmDevice {
     char **nodes;
     int available_nodes;
@@ -186,42 +193,70 @@ typedef struct _drmDevice {
     } businfo;
 } drmDevice, *drmDevicePtr;
 
+/* Basic types */
 typedef unsigned int drm_handle_t;
 typedef unsigned int drm_context_t;
 typedef unsigned int drm_magic_t;
 
-/* Additional type definitions needed by xf86drm.h */
+/* Additional structures */
 typedef struct _drmVersionBroken {
-    int     version_major;        /**< Major version */
-    int     version_minor;        /**< Minor version */
-    int     version_patchlevel;   /**< Patch level */
-    int     name_len;            /**< Length of name buffer */
-    char    *name;               /**< Name of driver */
-    int     date_len;            /**< Length of date buffer */
-    char    *date;               /**< User-space buffer to hold date */
-    int     desc_len;            /**< Length of desc buffer */
-    char    *desc;               /**< User-space buffer to hold desc */
+    int     version_major;
+    int     version_minor;
+    int     version_patchlevel;
+    int     name_len;
+    char    *name;
+    int     date_len;
+    char    *date;
+    int     desc_len;
+    char    *desc;
 } drmVersionPtr;
 
 typedef struct _drmStats {
-    unsigned long count;        /**< Number of data */
+    unsigned long count;
     struct {
-        unsigned long value;    /**< Value from kernel */
-        const char *long_format;    /**< Suggested format for long_name */
-        const char *long_name;      /**< Long name for value */
-        const char *rate_format;    /**< Suggested format for rate */
-        const char *rate_name;      /**< Short name for value per second */
-        int   isvalue;             /**< True if value (vs. counter) */
-        const char *mult_names[2];  /**< Names for multipliers (None, K) */
-        int   mult;                /**< Multiplier for value */
+        unsigned long value;
+        const char *long_format;
+        const char *long_name;
+        const char *rate_format;
+        const char *rate_name;
+        int   isvalue;
+        const char *mult_names[2];
+        int   mult;
     } data[15];
 } drmStatsT;
 
 #endif /* _DRM_TYPES_H_ */
 EOF
 
-    # Add include for drm_types.h to drm.h
-    sed -i '1i #include "drm_types.h"' "$workdir/include/libdrm/drm/drm.h"
+    # Create drm_all.h with function declarations
+    cat <<EOF >"$workdir/include/libdrm/drm/drm_all.h"
+#ifndef _DRM_ALL_H_
+#define _DRM_ALL_H_
+
+#include "drm_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* DRM function declarations */
+int drmGetNodeTypeFromFd(int fd);
+char *drmGetDeviceNameFromFd2(int fd);
+int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device);
+void drmFreeDevice(drmDevicePtr *device);
+int drmGetMagic(int fd, drm_magic_t *magic);
+int drmAuthMagic(int fd, drm_magic_t magic);
+int drmCreateContext(int fd, drm_context_t *handle);
+void drmFreeReservedContextList(drm_context_t *pt);
+int drmCreateDrawable(int fd, drm_drawable_t *handle);
+int drmDestroyDrawable(int fd, drm_drawable_t handle);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _DRM_ALL_H_ */
+EOF
 
     # Create pkgconfig directory and libdrm.pc file
     mkdir -p "$workdir/pkgconfig"
@@ -324,6 +359,8 @@ int drmGetMagic(int fd, drm_magic_t *magic) { return -1; }
 int drmAuthMagic(int fd, drm_magic_t magic) { return -1; }
 int drmCreateContext(int fd, drm_context_t *handle) { return -1; }
 void drmFreeReservedContextList(drm_context_t *pt) { }
+int drmCreateDrawable(int fd, drm_drawable_t *handle) { return -1; }
+int drmDestroyDrawable(int fd, drm_drawable_t handle) { return -1; }
 EOF
 
     # Update symlinks and compile
