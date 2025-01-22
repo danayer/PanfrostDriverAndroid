@@ -159,7 +159,7 @@ EOF
         exit 1
     }
 
-    # Run meson with corrected libdrm configuration
+    # Updated Meson configuration with correct options
     CFLAGS="-O2" \
     CXXFLAGS="-O2 -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables" \
     meson setup build-android-aarch64 \
@@ -177,9 +177,10 @@ EOF
         -Dbuild-aco-tests=false \
         -Dandroid-libbacktrace=disabled \
         -Db_ndebug=true \
-        -Ddri-drivers=[] \
-        -Dgallium-drivers=[] \
-        -Dplatforms=android \
+        -Degl=disabled \
+        -Dgbm=disabled \
+        -Dglx=disabled \
+        -Dopengl=false \
         -Dc_args="-Wno-error -DPANVK_VERSION_OVERRIDE=71" \
         -Dcpp_args="-Wno-error -DPANVK_VERSION_OVERRIDE=71 -Qunused-arguments" \
         -Dc_link_args="-lm -fuse-ld=lld" \
