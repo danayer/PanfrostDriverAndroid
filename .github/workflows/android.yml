@@ -8,39 +8,30 @@ jobs:
   build:
     strategy:
       matrix:
-        arch: [ "aarch64", "aarch32" ]
+        arch: [ "arm32", "aarch64" ]
       fail-fast: false
 
     name: "Build for ${{matrix.arch}}"
-    runs-on: ubuntu-latest
-    steps: 
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
-      - name: Install dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+        
+      - uses: actions/checkout@v2
+
+      - name: Build
         run: |
           sudo apt update
-          sudo apt install -y libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
-          pip3 install mako meson ninja
-
-          echo 'export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"' >> $GITHUB_ENV
-
-      - name: Finalize Build Crossfiles
-        run: |
-          cd pojav
-
-          envsubst <drm-android-${{matrix.arch}}  > drm-build-crossfile
-          envsubst <mesa-android-${{matrix.arch}} > mesa-build-crossfile        
-
-      - name: Build DRM
-        run: |
+          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
+          pip3 install mako
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
+          envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
           cd drm
-
           meson setup "build-android" \
             --prefix=/tmp/drm-static \
-            --cross-file "../pojav/drm-build-crossfile" \
+            --cross-file "../build-crossfile-drm" \
+            -Ddefault_library=static \
             -Dintel=disabled \
             -Dradeon=disabled \
             -Damdgpu=disabled \
@@ -49,36 +40,28 @@ jobs:
             -Dfreedreno=disabled \
             -Dvc4=disabled \
             -Detnaviv=disabled
-
           ninja -C "build-android" install
-
-      - name: Build Panfrost
-        run: |
+          cd ..
+          envsubst <android-${{matrix.arch}} >build-crossfile
           meson setup "build-android" \
             --prefix=/tmp/pan \
-            -Dtools=panfrost \
-            --cross-file "pojav/mesa-build-crossfile" \
+            --cross-file "build-crossfile" \
             -Dplatforms=android \
             -Dplatform-sdk-version=26 \
-            -Dllvm=disabled \
             -Dandroid-stub=true \
+            -Dllvm=disabled \
             -Dxlib-lease=disabled \
             -Degl=disabled \
             -Dgbm=disabled \
             -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
-            -Dvulkan-drivers=panfrost \
+            -Dvulkan-drivers= panfrost\
             -Dgallium-drivers=swrast,panfrost \
-            -Dshared-glapi=false \
-            -Dc_args="-Wno-error=incompatible-function-pointer-types" \
-            -Dbuildtype=release \
-            -Dandroid-libbacktrace=disabled
-
+            -Dshared-glapi=false
           ninja -C "build-android" install
-
-      - name: Upload Panfrost
-        uses: actions/upload-artifact@v4
+      - name: Upload libraries
+        uses: actions/upload-artifact@v2
         with:
           name: panfrost_${{matrix.arch}}
           path: /tmp/pan
