@@ -134,7 +134,8 @@ build_lib_for_android(){
         ndk="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
     fi
 
-    cat <<EOF >"android-aarch64"
+    # Create cross file in mesa directory
+    cat <<EOF >"$workdir/mesa/android-aarch64"
 [binaries]
 ar = '$ndk/llvm-ar'
 c = ['ccache', '$ndk/aarch64-linux-android$sdkver-clang']
@@ -151,9 +152,16 @@ endian = 'little'
 EOF
 
     echo "Generating build files ..." $'\n'
-    cd mesa
+    
+    # Ensure we're in the mesa directory
+    cd "$workdir/mesa" || {
+        echo -e "$red Failed to enter mesa directory! $nocolor"
+        exit 1
+    }
+
+    # Run meson with correct paths
     meson setup build-android-aarch64 \
-        --cross-file ../android-aarch64 \
+        --cross-file android-aarch64 \
         -Dbuildtype=release \
         -Dplatforms=android \
         -Dplatform-sdk-version=$sdkver \
