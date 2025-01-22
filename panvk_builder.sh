@@ -135,12 +135,23 @@ build_lib_for_android(){
     fi
 
     # Create directories for libdrm headers
-    mkdir -p "$workdir/include/libdrm"
+    mkdir -p "$workdir/include/libdrm/drm"
     mkdir -p "$workdir/include/xf86drm"
 
     # Download necessary libdrm headers
-    curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/include/drm/drm.h" -o "$workdir/include/libdrm/drm.h"
+    echo "Downloading libdrm headers..."
+    LIBDRM_HEADERS=(
+        "drm.h"
+        "drm_mode.h"
+        "drm_fourcc.h"
+    )
+    
+    for header in "${LIBDRM_HEADERS[@]}"; do
+        curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/include/drm/$header" -o "$workdir/include/libdrm/drm/$header"
+    done
+    
     curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/xf86drm.h" -o "$workdir/include/libdrm/xf86drm.h"
+    curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/xf86drm.h" -o "$workdir/include/libdrm/drm.h"
 
     # Create pkgconfig directory and libdrm.pc file
     mkdir -p "$workdir/pkgconfig"
@@ -153,10 +164,10 @@ Name: libdrm
 Description: Userspace interface to kernel DRM services
 Version: 2.4.110
 Libs: -L\${libdir} -ldrm
-Cflags: -I\${includedir}/libdrm
+Cflags: -I\${includedir}/libdrm -I\${includedir}/libdrm/drm
 EOF
 
-    # Create cross file with updated pkg-config settings
+    # Create cross file with updated include paths
     cat <<EOF >"$workdir/mesa/android-aarch64"
 [binaries]
 ar = '$ndk/llvm-ar'
@@ -167,8 +178,8 @@ cpp_ld = 'lld'
 strip = '$ndk/aarch64-linux-android-strip'
 pkg-config = ['env', 'PKG_CONFIG_LIBDIR=$workdir/pkgconfig', '/usr/bin/pkg-config']
 [built-in options]
-c_args = ['-I$workdir/include']
-cpp_args = ['-I$workdir/include']
+c_args = ['-I$workdir/include', '-I$workdir/include/libdrm/drm']
+cpp_args = ['-I$workdir/include', '-I$workdir/include/libdrm/drm']
 [host_machine]
 system = 'android'
 cpu_family = 'aarch64'
