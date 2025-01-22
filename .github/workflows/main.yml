@@ -19,7 +19,9 @@ jobs:
         sudo apt install -y libdrm-dev
     
     - name: Execute build script
-      run: bash ./panvk_builder.sh
+      run: |
+        cp patches/fix_warnings.patch panvk_workdir/
+        bash ./panvk_builder.sh
 
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3.1.0
