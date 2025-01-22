@@ -196,28 +196,32 @@ typedef enum {
 #endif /* _DRM_BASE_TYPES_H_ */
 EOF
 
-    # Create device types header with proper PCI struct that matches Mesa's expectations
+    # Create device types header that exactly matches WSI expectations
     cat <<EOF >"$workdir/include/libdrm/drm/drm_device.h"
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
 
 #include "drm_base_types.h"
 
+#define DRM_BUS_PCI 0
+
+typedef struct _drmPciInfo {
+    uint32_t pciDomain;
+    uint32_t pciBus;
+    uint32_t pciDevice;
+    uint32_t pciFunction;
+    uint32_t pciVendor;
+    uint32_t pciDevice_id;
+    uint32_t pciSubsystem_vendor;
+    uint32_t pciSubsystem_device;
+    uint32_t pciRevision;
+} drmPciInfo;
+
 typedef struct _drmDevice {
     char **nodes;
     int available_nodes;
-    int bustype;             /* DRM_BUS_PCI = 0 */
-    struct {
-        unsigned int domain;
-        unsigned int bus;
-        unsigned int dev;
-        unsigned int func;
-        unsigned int vendor_id;
-        unsigned int device_id;
-        unsigned int subvendor_id;
-        unsigned int subdevice_id;
-        unsigned int revision_id;
-    } businfo;  /* Direct PCI info, not a pointer */
+    int bustype;               /* DRM_BUS_PCI = 0 */
+    drmPciInfo businfo;        /* Direct PCI bus info */
 } drmDevice, *drmDevicePtr;
 
 #endif /* _DRM_DEVICE_H_ */
@@ -360,7 +364,7 @@ int drmGetCap(int fd, uint64_t capability, uint64_t *value);
 #endif /* _DRM_SYNCOBJ_H_ */
 EOF
 
-    # Update drm_stub.c to use proper types
+    # Update drm_stub.c to match new structure
     cat <<EOF >"$workdir/drm_stub.c"
 #include "drm/drm.h"
 #include <stddef.h>
@@ -373,8 +377,8 @@ int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) {
     if (device) {
         *device = calloc(1, sizeof(drmDevice));
         if (*device) {
-            (*device)->bustype = 0;  // DRM_BUS_PCI
-            memset(&(*device)->businfo, 0, sizeof((*device)->businfo));
+            (*device)->bustype = DRM_BUS_PCI;
+            memset(&(*device)->businfo, 0, sizeof(drmPciInfo));
         }
     }
     return -1; 
