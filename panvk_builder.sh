@@ -138,8 +138,8 @@ build_lib_for_android(){
     mkdir -p "$workdir/include/libdrm/drm"
     mkdir -p "$workdir/include/xf86drm"
 
-    # Download necessary libdrm headers
-    echo "Downloading libdrm headers..."
+    # Download necessary libdrm headers and create type definitions
+    echo "Downloading and setting up libdrm headers..."
     LIBDRM_HEADERS=(
         "drm.h"
         "drm_mode.h"
@@ -151,7 +151,23 @@ build_lib_for_android(){
     done
     
     curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/xf86drm.h" -o "$workdir/include/libdrm/xf86drm.h"
-    curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/xf86drm.h" -o "$workdir/include/libdrm/drm.h"
+
+    # Create drm_types.h with missing type definitions
+    cat <<EOF >"$workdir/include/libdrm/drm/drm_types.h"
+#ifndef _DRM_TYPES_H_
+#define _DRM_TYPES_H_
+
+#include <stdint.h>
+
+typedef unsigned int drm_handle_t;
+typedef unsigned int drm_context_t;
+typedef unsigned int drm_magic_t;
+
+#endif /* _DRM_TYPES_H_ */
+EOF
+
+    # Add include for drm_types.h to xf86drm.h
+    sed -i '1a #include <drm/drm_types.h>' "$workdir/include/libdrm/xf86drm.h"
 
     # Create pkgconfig directory and libdrm.pc file
     mkdir -p "$workdir/pkgconfig"
