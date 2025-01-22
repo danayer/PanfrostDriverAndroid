@@ -128,7 +128,8 @@ patch_to_description() {
 
 build_lib_for_android(){
     echo "Creating meson cross file ..." $'\n'
-    if [ -z "${ANDROID_NDK_LATEST_HOME}"]; then
+    # Fix syntax error in if condition
+    if [ -z "${ANDROID_NDK_LATEST_HOME}" ]; then
         ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
     else    
         ndk="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -153,17 +154,15 @@ EOF
 
     echo "Generating build files ..." $'\n'
     
-    # Ensure we're in the mesa directory
     cd "$workdir/mesa" || {
         echo -e "$red Failed to enter mesa directory! $nocolor"
         exit 1
     }
 
-    # Run meson with updated dependencies
+    # Updated Meson configuration
     meson setup build-android-aarch64 \
         --cross-file android-aarch64 \
         -Dbuildtype=release \
-        -Doptimization=2 \
         -Dplatforms=android \
         -Dplatform-sdk-version=$sdkver \
         -Dandroid-stub=true \
@@ -177,11 +176,10 @@ EOF
         -Dandroid-libbacktrace=disabled \
         -Db_ndebug=true \
         -Db_lto=false \
-        -Dlibdrm=auto \
         -Dc_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71 -D__builtin_popcount=__builtin_popcount -D__builtin_popcountll=__builtin_popcountll -D__builtin_unreachable=__builtin_unreachable" \
         -Dcpp_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71 -D__builtin_popcount=__builtin_popcount -D__builtin_popcountll=__builtin_popcountll -D__builtin_unreachable=__builtin_unreachable" \
-        -Dc_link_args="-lm -ldrm -fuse-ld=lld -Wl,--undefined-version" \
-        -Dcpp_link_args="-lm -ldrm -fuse-ld=lld -Wl,--undefined-version" &> "$workdir"/meson_log || {
+        -Dc_link_args="-lm -fuse-ld=lld -Wl,--undefined-version" \
+        -Dcpp_link_args="-lm -fuse-ld=lld -Wl,--undefined-version" &> "$workdir"/meson_log || {
             echo -e "$red Meson configuration failed! $nocolor"
             cat "$workdir"/meson_log
             exit 1
