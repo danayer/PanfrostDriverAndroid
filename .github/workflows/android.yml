@@ -75,14 +75,18 @@ jobs:
             -Dandroid-stub=true \
             -Dllvm=disabled \
             -Dxlib-lease=disabled \
-            -Degl=disabled \
-            -Dgbm=disabled \
+            -Degl=auto \
+            -Dgbm=auto \
             -Dglx=disabled \
             -Dopengl=true \
+            -Dgles1=enabled \
+            -Dgles2=enabled \
+            -Dglvnd=disabled \
             -Dosmesa=true \
             -Dvulkan-drivers=panfrost,virtio \
-            -Dgallium-drivers=softpipe,virgl,panfrost \
-            -Dshared-glapi=disabled
+            -Dgallium-drivers=softpipe,virgl,panfrost,zink \
+            -Dshared-glapi=enabled \
+            -Dgles-lib-suffix=_mesa
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v4
@@ -104,6 +108,7 @@ jobs:
           name: Build ${{ github.run_number }}
           tag_name: build_${{ github.run_number }}
           draft: false
+          prerelease: true
           files: |
             panfrost_aarch64.tar.gz
 
