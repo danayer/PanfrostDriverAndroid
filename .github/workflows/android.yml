@@ -68,7 +68,7 @@ jobs:
             -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
-            -Dvulkan-drivers= \
+            -Dvulkan-drivers=panfrost \
             -Dgallium-drivers=swrast,panfrost \
             -Dshared-glapi=false \
             -Dc_args="-Wno-error=incompatible-function-pointer-types" \
