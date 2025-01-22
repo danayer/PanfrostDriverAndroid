@@ -2,9 +2,10 @@ diff --git a/src/panfrost/util/pan_lower_xfb.c b/src/panfrost/util/pan_lower_xfb
 index abc1234..def5678 100644
 --- a/src/panfrost/util/pan_lower_xfb.c
 +++ b/src/panfrost/util/pan_lower_xfb.c
-@@ -57,7 +57,7 @@
+@@ -57,7 +57,7 @@ static void
 -   nir_component_mask_t write_mask = ~0;
 +   nir_component_mask_t write_mask = (nir_component_mask_t)0xFFFF;
++
 
 diff --git a/src/panfrost/vulkan/panvk_vX_nir_lower_descriptors.c b/src/panfrost/vulkan/panvk_vX_nir_lower_descriptors.c
 index abc1234..def5678 100644
@@ -24,7 +25,7 @@ index abc1234..def5678 100644
 @@ -280,8 +280,8 @@ setup_zs_shader_info(struct panvk_cmd_buffer *cmdbuf,
        struct pan_earlyzs earlyzs =
           pan_earlyzs_get(depth_stencil->zs);
- 
+
 -         cfg.properties.pixel_kill_operation = earlyzs.kill;
 -         cfg.properties.zs_update_operation = earlyzs.update;
 +         cfg.properties.pixel_kill_operation = (enum mali_pixel_kill)earlyzs.kill;
