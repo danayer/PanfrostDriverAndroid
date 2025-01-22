@@ -140,7 +140,7 @@ build_lib_for_android(){
 [binaries]
 ar = '$ndk/llvm-ar'
 c = ['ccache', '$ndk/aarch64-linux-android$sdkver-clang']
-cpp = ['ccache', '$ndk/aarch64-linux-android$sdkver-clang++', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
+cpp = ['ccache', '$ndk/aarch64-linux-android$sdkver-clang++']
 c_ld = 'lld'
 cpp_ld = 'lld'
 strip = '$ndk/aarch64-linux-android-strip'
@@ -159,9 +159,9 @@ EOF
         exit 1
     }
 
-    # Run meson with updated compiler flags and builtin handling
-    CFLAGS="-fno-builtin" \
-    CXXFLAGS="-fno-builtin" \
+    # Run meson with updated compiler flags
+    CFLAGS="-O2" \
+    CXXFLAGS="-O2 -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables" \
     meson setup build-android-aarch64 \
         --cross-file android-aarch64 \
         -Dbuildtype=release \
@@ -177,11 +177,10 @@ EOF
         -Dbuild-aco-tests=false \
         -Dandroid-libbacktrace=disabled \
         -Db_ndebug=true \
-        -Db_lto=false \
-        -Dc_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71 -D__BIONIC__" \
-        -Dcpp_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71 -D__BIONIC__" \
-        -Dc_link_args="-lm -fuse-ld=lld -Wl,--undefined-version" \
-        -Dcpp_link_args="-lm -fuse-ld=lld -Wl,--undefined-version" &> "$workdir"/meson_log || {
+        -Dc_args="-Wno-error -DPANVK_VERSION_OVERRIDE=71" \
+        -Dcpp_args="-Wno-error -DPANVK_VERSION_OVERRIDE=71 -Qunused-arguments" \
+        -Dc_link_args="-lm -fuse-ld=lld" \
+        -Dcpp_link_args="-lm -fuse-ld=lld" &> "$workdir"/meson_log || {
             echo -e "$red Meson configuration failed! $nocolor"
             cat "$workdir"/meson_log
             exit 1
