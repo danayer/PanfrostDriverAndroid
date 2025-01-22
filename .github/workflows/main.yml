@@ -20,7 +20,8 @@ jobs:
     
     - name: Execute build script
       run: |
-        cp patches/fix_warnings.patch panvk_workdir/
+        mkdir -p panvk_workdir
+        cp -r patches panvk_workdir/
         bash ./panvk_builder.sh
 
     - name: Upload a Build Artifact
