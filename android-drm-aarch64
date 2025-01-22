@@ -9,6 +9,7 @@ strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
 # finding all the optional deps it looks for.  Use system pkg-config pointing at a
 # directory we get to populate with any .pc files we want to add for Android
 pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
+pkg-config = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
 
 [host_machine]
 system = 'linux'
