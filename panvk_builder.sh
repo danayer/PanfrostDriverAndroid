@@ -190,6 +190,33 @@ typedef unsigned int drm_handle_t;
 typedef unsigned int drm_context_t;
 typedef unsigned int drm_magic_t;
 
+/* Additional type definitions needed by xf86drm.h */
+typedef struct _drmVersionBroken {
+    int     version_major;        /**< Major version */
+    int     version_minor;        /**< Minor version */
+    int     version_patchlevel;   /**< Patch level */
+    int     name_len;            /**< Length of name buffer */
+    char    *name;               /**< Name of driver */
+    int     date_len;            /**< Length of date buffer */
+    char    *date;               /**< User-space buffer to hold date */
+    int     desc_len;            /**< Length of desc buffer */
+    char    *desc;               /**< User-space buffer to hold desc */
+} drmVersionPtr;
+
+typedef struct _drmStats {
+    unsigned long count;        /**< Number of data */
+    struct {
+        unsigned long value;    /**< Value from kernel */
+        const char *long_format;    /**< Suggested format for long_name */
+        const char *long_name;      /**< Long name for value */
+        const char *rate_format;    /**< Suggested format for rate */
+        const char *rate_name;      /**< Short name for value per second */
+        int   isvalue;             /**< True if value (vs. counter) */
+        const char *mult_names[2];  /**< Names for multipliers (None, K) */
+        int   mult;                /**< Multiplier for value */
+    } data[15];
+} drmStatsT;
+
 #endif /* _DRM_TYPES_H_ */
 EOF
 
@@ -248,6 +275,10 @@ int drmGetNodeTypeFromFd(int fd) { return -1; }
 char *drmGetDeviceNameFromFd2(int fd) { return 0; }
 int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) { return -1; }
 void drmFreeDevice(drmDevicePtr *device) { }
+int drmGetMagic(int fd, drm_magic_t *magic) { return -1; }
+int drmAuthMagic(int fd, drm_magic_t magic) { return -1; }
+int drmCreateContext(int fd, drm_context_t *handle) { return -1; }
+void drmFreeReservedContextList(drm_context_t *pt) { }
 EOF
 
     # Update include paths and compile
