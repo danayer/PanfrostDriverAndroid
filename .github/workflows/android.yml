@@ -2,7 +2,7 @@ name: Build Android
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+    - cron: '0 0 * * 0'  # Runs at 00:00 UTC every Sunday
   workflow_dispatch:  # Allows manual triggering
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
