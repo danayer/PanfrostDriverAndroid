@@ -159,7 +159,7 @@ EOF
         exit 1
     }
 
-    # Run meson with corrected options for PanVK
+    # Run meson with updated compiler flags
     meson setup build-android-aarch64 \
         --cross-file android-aarch64 \
         -Dbuildtype=release \
@@ -174,9 +174,13 @@ EOF
         -Dperfetto=false \
         -Dbuild-aco-tests=false \
         -Dandroid-libbacktrace=disabled \
-        -Db_lto=true \
-        -Dc_args="-Wno-error -DPANVK_VERSION_OVERRIDE=71" \
-        -Dcpp_args="-Wno-error -DPANVK_VERSION_OVERRIDE=71" &> "$workdir"/meson_log || {
+        -Dcompiler-optimization=2 \
+        -Db_ndebug=true \
+        -Db_lto=false \
+        -Dc_args="-Wno-error -DPANVK_VERSION_OVERRIDE=71 -fno-builtin-unreachable -fno-builtin-popcount" \
+        -Dcpp_args="-Wno-error -DPANVK_VERSION_OVERRIDE=71 -fno-builtin-unreachable -fno-builtin-popcount" \
+        -Dc_link_args="-lm" \
+        -Dcpp_link_args="-lm" &> "$workdir"/meson_log || {
             echo -e "$red Meson configuration failed! $nocolor"
             cat "$workdir"/meson_log
             exit 1
