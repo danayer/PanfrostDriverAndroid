@@ -37,10 +37,8 @@ jobs:
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
           
-          # Create and apply patch directly using sed
+          # Add missing include directly
           sed -i '/#include <stdlib.h>/a #include <string.h>' src/panfrost/vulkan/panvk_android.c
-          git diff > $GITHUB_WORKSPACE/patches/panvk-android-include.patch
-          git apply $GITHUB_WORKSPACE/patches/panvk-android-include.patch
           
           # Rest of the build process
           envsubst <$GITHUB_WORKSPACE/android-drm-${{matrix.arch}} >build-crossfile-drm
