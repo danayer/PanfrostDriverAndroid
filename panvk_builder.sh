@@ -192,12 +192,37 @@ Libs: -L\${libdir} -ldrm
 Cflags: -I\${includedir}/libdrm -I\${includedir}/libdrm/drm
 EOF
 
+    # Create stub drm.h declaration
+    cat <<EOF >"$workdir/drm_stub.h"
+#ifndef _DRM_H_
+#define _DRM_H_
+
+#include <stdint.h>
+
+typedef struct _drmDevice {
+    char **nodes;
+    int available_nodes;
+    int bustype;
+    union {
+        struct {
+            uint16_t vendor;
+            uint16_t device;
+            uint16_t subsystem_vendor;
+            uint16_t subsystem_device;
+            uint8_t revision;
+        } pci;
+    } businfo;
+} drmDevice, *drmDevicePtr;
+
+#endif /* _DRM_H_ */
+EOF
+
     # Create stub libdrm library
     echo "Creating stub libdrm library..."
     mkdir -p "$workdir/lib"
     
-    # Create a minimal C file with required symbols
     cat <<EOF >"$workdir/drm_stub.c"
+#include "drm_stub.h"
 #include <stdint.h>
 
 // Stub functions - minimal implementation
@@ -207,13 +232,8 @@ int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) { return -1; }
 void drmFreeDevice(drmDevicePtr *device) { }
 EOF
 
-    # Compile stub library
-    if [ -z "${ANDROID_NDK_LATEST_HOME}" ]; then
-        ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
-    else    
-        ndk="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-    fi
-    
+    # Update include paths and compile
+    cp "$workdir/drm_stub.h" "$workdir/include/libdrm/drm/drm.h"
     "$ndk/aarch64-linux-android$sdkver-clang" -c -o "$workdir/drm_stub.o" "$workdir/drm_stub.c" -I"$workdir/include/libdrm"
     "$ndk/llvm-ar" rcs "$workdir/lib/libdrm.a" "$workdir/drm_stub.o"
 
