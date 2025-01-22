@@ -134,18 +134,26 @@ build_lib_for_android(){
         ndk="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
     fi
 
+    # Create directories for libdrm headers
+    mkdir -p "$workdir/include/libdrm"
+    mkdir -p "$workdir/include/xf86drm"
+
+    # Download necessary libdrm headers
+    curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/include/drm/drm.h" -o "$workdir/include/libdrm/drm.h"
+    curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/xf86drm.h" -o "$workdir/include/libdrm/xf86drm.h"
+
     # Create pkgconfig directory and libdrm.pc file
     mkdir -p "$workdir/pkgconfig"
     cat <<EOF >"$workdir/pkgconfig/libdrm.pc"
-prefix=/usr
-libdir=\${prefix}/lib/aarch64-linux-android
+prefix=$workdir
+libdir=\${prefix}/lib
 includedir=\${prefix}/include
 
 Name: libdrm
 Description: Userspace interface to kernel DRM services
 Version: 2.4.110
 Libs: -L\${libdir} -ldrm
-Cflags: -I\${includedir} -I\${includedir}/libdrm
+Cflags: -I\${includedir}/libdrm
 EOF
 
     # Create cross file with updated pkg-config settings
@@ -158,6 +166,9 @@ c_ld = 'lld'
 cpp_ld = 'lld'
 strip = '$ndk/aarch64-linux-android-strip'
 pkg-config = ['env', 'PKG_CONFIG_LIBDIR=$workdir/pkgconfig', '/usr/bin/pkg-config']
+[built-in options]
+c_args = ['-I$workdir/include']
+cpp_args = ['-I$workdir/include']
 [host_machine]
 system = 'android'
 cpu_family = 'aarch64'
@@ -172,10 +183,10 @@ EOF
         exit 1
     }
 
-    # Run meson with updated pkgconfig environment
+    # Run meson with updated environment
     PKG_CONFIG_PATH="$workdir/pkgconfig" \
-    CFLAGS="-O2" \
-    CXXFLAGS="-O2 -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables" \
+    CFLAGS="-O2 -I$workdir/include" \
+    CXXFLAGS="-O2 -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables -I$workdir/include" \
     meson setup build-android-aarch64 \
         --cross-file android-aarch64 \
         -Dbuildtype=release \
