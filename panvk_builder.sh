@@ -164,20 +164,34 @@ build_lib_for_android(){
     # Update drm.h include path in xf86drm.h
     sed -i 's|<drm.h>|"drm/drm.h"|g' "$workdir/include/libdrm/xf86drm.h"
 
-    # Create drm_types.h with missing type definitions
-    cat <<EOF >"$workdir/include/libdrm/drm/drm_types.h"
-#ifndef _DRM_TYPES_H_
-#define _DRM_TYPES_H_
+    # Create base types header first
+    cat <<EOF >"$workdir/include/libdrm/drm/drm_base_types.h"
+#ifndef _DRM_BASE_TYPES_H_
+#define _DRM_BASE_TYPES_H_
 
 #include <stdint.h>
 
-/* Drawable types */
+/* Basic DRM types */
+typedef unsigned int drm_handle_t;
+typedef unsigned int drm_context_t;
+typedef unsigned int drm_magic_t;
 typedef unsigned int drm_drawable_t;
+
+/* Drawable info types */
 typedef enum {
     DRM_DRAWABLE_CLIPRECTS
 } drm_drawable_info_type_t;
 
-/* Device types */
+#endif /* _DRM_BASE_TYPES_H_ */
+EOF
+
+    # Create device types header
+    cat <<EOF >"$workdir/include/libdrm/drm/drm_device.h"
+#ifndef _DRM_DEVICE_H_
+#define _DRM_DEVICE_H_
+
+#include "drm_base_types.h"
+
 typedef struct _drmDevice {
     char **nodes;
     int available_nodes;
@@ -193,47 +207,16 @@ typedef struct _drmDevice {
     } businfo;
 } drmDevice, *drmDevicePtr;
 
-/* Basic types */
-typedef unsigned int drm_handle_t;
-typedef unsigned int drm_context_t;
-typedef unsigned int drm_magic_t;
-
-/* Additional structures */
-typedef struct _drmVersionBroken {
-    int     version_major;
-    int     version_minor;
-    int     version_patchlevel;
-    int     name_len;
-    char    *name;
-    int     date_len;
-    char    *date;
-    int     desc_len;
-    char    *desc;
-} drmVersionPtr;
-
-typedef struct _drmStats {
-    unsigned long count;
-    struct {
-        unsigned long value;
-        const char *long_format;
-        const char *long_name;
-        const char *rate_format;
-        const char *rate_name;
-        int   isvalue;
-        const char *mult_names[2];
-        int   mult;
-    } data[15];
-} drmStatsT;
-
-#endif /* _DRM_TYPES_H_ */
+#endif /* _DRM_DEVICE_H_ */
 EOF
 
-    # Create drm_all.h with function declarations
-    cat <<EOF >"$workdir/include/libdrm/drm/drm_all.h"
-#ifndef _DRM_ALL_H_
-#define _DRM_ALL_H_
+    # Create stub implementation header
+    cat <<EOF >"$workdir/include/libdrm/drm/drm_stub.h"
+#ifndef _DRM_STUB_H_
+#define _DRM_STUB_H_
 
-#include "drm_types.h"
+#include "drm_base_types.h"
+#include "drm_device.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -255,7 +238,36 @@ int drmDestroyDrawable(int fd, drm_drawable_t handle);
 }
 #endif
 
-#endif /* _DRM_ALL_H_ */
+#endif /* _DRM_STUB_H_ */
+EOF
+
+    # Update main drm.h
+    cat <<EOF >"$workdir/include/libdrm/drm/drm.h"
+#ifndef _DRM_H_
+#define _DRM_H_
+
+#include "drm_base_types.h"
+#include "drm_device.h"
+#include "drm_stub.h"
+
+#endif /* _DRM_H_ */
+EOF
+
+    # Create stub implementation
+    cat <<EOF >"$workdir/drm_stub.c"
+#include "drm/drm.h"
+#include <stddef.h>
+
+int drmGetNodeTypeFromFd(int fd) { return -1; }
+char *drmGetDeviceNameFromFd2(int fd) { return NULL; }
+int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) { return -1; }
+void drmFreeDevice(drmDevicePtr *device) { }
+int drmGetMagic(int fd, drm_magic_t *magic) { return -1; }
+int drmAuthMagic(int fd, drm_magic_t magic) { return -1; }
+int drmCreateContext(int fd, drm_context_t *handle) { return -1; }
+void drmFreeReservedContextList(drm_context_t *pt) { }
+int drmCreateDrawable(int fd, drm_drawable_t *handle) { return -1; }
+int drmDestroyDrawable(int fd, drm_drawable_t handle) { return -1; }
 EOF
 
     # Create pkgconfig directory and libdrm.pc file
@@ -363,11 +375,8 @@ int drmCreateDrawable(int fd, drm_drawable_t *handle) { return -1; }
 int drmDestroyDrawable(int fd, drm_drawable_t handle) { return -1; }
 EOF
 
-    # Update symlinks and compile
-    ln -sf "$workdir/include/libdrm/drm/drm_all.h" "$workdir/include/libdrm/drm/drm.h"
-    ln -sf "$workdir/include/libdrm/drm/drm_all.h" "$workdir/include/libdrm/drm/drm_types.h"
-
-    # Compile with proper include paths
+    # Create lib directory and compile
+    mkdir -p "$workdir/lib"
     "$ndk/aarch64-linux-android$sdkver-clang" -c -o "$workdir/drm_stub.o" "$workdir/drm_stub.c" \
         -I"$workdir/include/libdrm" \
         -fPIC -Wno-unused-parameter
