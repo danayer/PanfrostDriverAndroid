@@ -37,6 +37,9 @@ jobs:
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
           
+          # Fix blake3 implementation
+          sed -i '/blake3_hash_many_portable(/i\void blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out);' src/util/blake3/blake3_impl.h
+          
           # Apply patches
           sed -i '/#define UNDEFINED/i\  NEON = 1 << 7,' src/util/blake3/blake3_dispatch.c
           sed -i '/^#endif/i\#if defined(__ARM_NEON) || defined(__aarch64__)\n#define BLAKE3_USE_NEON 1\n#else\n#define BLAKE3_USE_NEON 0\n#endif' src/util/blake3/blake3_dispatch.c
