@@ -143,7 +143,7 @@ cpp = ['ccache', '$ndk/aarch64-linux-android$sdkver-clang++', '-fno-exceptions',
 c_ld = 'lld'
 cpp_ld = 'lld'
 strip = '$ndk/aarch64-linux-android-strip'
-pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=NDKDIR/pkgconfig', '/usr/bin/pkg-config']
+pkg-config = ['env', 'PKG_CONFIG_LIBDIR=NDKDIR/pkgconfig', '/usr/bin/pkg-config']
 [host_machine]
 system = 'android'
 cpu_family = 'aarch64'
@@ -170,14 +170,13 @@ EOF
         -Dvulkan-drivers=panfrost \
         -Dllvm=disabled \
         -Dshared-llvm=disabled \
-        -Dpanfrost-version-override=7.1 \
-        -Dperfetto=false \
         -Dvulkan-beta=true \
+        -Dperfetto=false \
         -Dbuild-aco-tests=false \
         -Dandroid-libbacktrace=disabled \
         -Db_lto=true \
-        -Dc_args="-Wno-error" \
-        -Dcpp_args="-Wno-error" &> "$workdir"/meson_log || {
+        -Dc_args="-Wno-error -DPANVK_VERSION_OVERRIDE=71" \
+        -Dcpp_args="-Wno-error -DPANVK_VERSION_OVERRIDE=71" &> "$workdir"/meson_log || {
             echo -e "$red Meson configuration failed! $nocolor"
             cat "$workdir"/meson_log
             exit 1
