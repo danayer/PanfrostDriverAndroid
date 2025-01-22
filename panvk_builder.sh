@@ -18,12 +18,70 @@ commit_short=""
 mesa_version=""
 vulkan_version=""
 
-check_deps() {
-    # ...existing code...
+check_deps(){
+    sudo apt remove meson
+    pip install meson PyYAML
+
+    echo "Checking system for required Dependencies ..."
+    for deps_chk in $deps; do
+        sleep 0.25
+        if command -v "$deps_chk" >/dev/null 2>&1 ; then
+            echo -e "$green - $deps_chk found $nocolor"
+        else
+            echo -e "$red - $deps_chk not found, can't countinue. $nocolor"
+            deps_missing=1
+        fi
+    done
+
+    if [ "$deps_missing" == "1" ]; then
+        echo "Please install missing dependencies" && exit 1
+    fi
+
+    echo "Installing python Mako dependency (if missing) ..." $'\n'
+    pip install mako &> /dev/null
 }
 
-prepare_workdir() {
-    # ...existing code...
+prepare_workdir(){
+    echo "Creating and entering to work directory ..." $'\n'
+    mkdir -p "$workdir" && cd "$_"
+
+    if [ -z "${ANDROID_NDK_LATEST_HOME}" ]; then
+        if [ ! -n "$(ls -d android-ndk*)" ]; then
+            echo "Downloading android-ndk from google server (~640 MB) ..." $'\n'
+            curl https://dl.google.com/android/repository/"$ndkver"-linux.zip --output "$ndkver"-linux.zip &> /dev/null
+            echo "Extracting android-ndk to a folder ..." $'\n'
+            unzip "$ndkver"-linux.zip &> /dev/null
+        fi
+    else    
+        echo "Using android ndk from github image"
+    fi
+
+    if [ -z "$1" ]; then
+        if [ -d mesa ]; then
+            echo "Removing old mesa ..." $'\n'
+            rm -rf mesa
+        fi
+        
+        echo "Cloning mesa ..." $'\n'
+        git clone --depth=1 "$mesasrc"
+
+        cd mesa
+        commit_short=$(git rev-parse --short HEAD)
+        commit=$(git rev-parse HEAD)
+        mesa_version=$(cat VERSION | xargs)
+        version=$(awk -F'COMPLETE VK_MAKE_API_VERSION(|)' '{print $2}' <<< $(cat include/vulkan/vulkan_core.h) | xargs)
+        major=$(echo $version | cut -d "," -f 2 | xargs)
+        minor=$(echo $version | cut -d "," -f 3 | xargs)
+        patch=$(awk -F'VK_HEADER_VERSION |\n#define' '{print $2}' <<< $(cat include/vulkan/vulkan_core.h) | xargs)
+        vulkan_version="$major.$minor.$patch"
+    else        
+        cd mesa
+        if [ $1 == "patched" ]; then 
+            apply_patches ${base_patches[@]}
+        else 
+            apply_patches ${experimental_patches[@]}
+        fi
+    fi
 }
 
 apply_patches() {
