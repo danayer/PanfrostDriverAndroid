@@ -159,7 +159,7 @@ EOF
         exit 1
     }
 
-    # Run meson with correct paths
+    # Run meson with correct options
     meson setup build-android-aarch64 \
         --cross-file android-aarch64 \
         -Dbuildtype=release \
@@ -170,7 +170,7 @@ EOF
         -Dvulkan-drivers=panfrost \
         -Dllvm=disabled \
         -Dshared-llvm=disabled \
-        -Dpanfrost-kmds=kgsl \
+        -Dpanfrost-kmsro=false \
         -Dvulkan-beta=true \
         -Dbuild-aco-tests=false \
         -Dandroid-libbacktrace=disabled \
