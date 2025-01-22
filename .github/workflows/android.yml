@@ -37,15 +37,12 @@ jobs:
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
           
-          # Fix blake3 implementation
-          # Add includes and fix declarations in blake3_impl.h
-          sed -i '1i #include <stdint.h>' src/util/blake3/blake3_impl.h
-          sed -i '/BLAKE3_BLOCK_LEN/a\void blake3_compress_in_place(uint32_t cv[8], const uint8_t block[64], uint8_t block_len, uint64_t counter, uint8_t flags);\nvoid blake3_compress_xof(const uint32_t cv[8], const uint8_t block[64], uint8_t block_len, uint64_t counter, uint8_t flags, uint8_t *out);\nvoid blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out);' src/util/blake3/blake3_impl.h
+          # Fix blake3 implementation with sed
+          sed -i '1i\#include <stdint.h>' src/util/blake3/blake3_impl.h
+          sed -i '/blake3_hash_many_portable/i\void blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out);' src/util/blake3/blake3_impl.h
           
-          # Add NEON implementation to blake3_dispatch.c
-          sed -i '/#include "blake3_impl.h"/a\#if defined(__ARM_NEON) || defined(__aarch64__)\n#define BLAKE3_USE_NEON 1\n#else\n#define BLAKE3_USE_NEON 0\n#endif' src/util/blake3/blake3_dispatch.c
-          sed -i '/enum cpu_feature {/a\  NEON = 1 << 7,' src/util/blake3/blake3_dispatch.c
-          sed -i '/blake3_hash_many_portable(/i\void blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out) {\n  blake3_hash_many_portable(inputs, num_inputs, blocks, key, counter, increment_counter, flags, flags_start, flags_end, out);\n}\n' src/util/blake3/blake3_dispatch.c
+          # Add NEON implementation
+          sed -i '/^#endif/i\\n#if BLAKE3_USE_NEON == 1\nvoid blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out) {\n  blake3_hash_many_portable(inputs, num_inputs, blocks, key, counter, increment_counter, flags, flags_start, flags_end, out);\n}\n#endif' src/util/blake3/blake3_dispatch.c
           
           # Add missing include to panvk_android.c
           sed -i '/#include <stdlib.h>/a #include <string.h>' src/panfrost/vulkan/panvk_android.c
