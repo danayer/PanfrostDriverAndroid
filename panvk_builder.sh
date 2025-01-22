@@ -189,29 +189,77 @@ typedef enum {
 #endif /* _DRM_BASE_TYPES_H_ */
 EOF
 
-    # Create device types header
+    # Create drm_pci.h for PCI device info
+    cat <<EOF >"$workdir/include/libdrm/drm/drm_pci.h"
+#ifndef _DRM_PCI_H_
+#define _DRM_PCI_H_
+
+#include <stdint.h>
+
+struct drm_pci_info {
+    uint32_t domain;
+    uint32_t bus;
+    uint32_t dev;
+    uint32_t func;
+    uint16_t vendor;
+    uint16_t device;
+    uint16_t subsystem_vendor;
+    uint16_t subsystem_device;
+    uint8_t revision;
+};
+
+#endif /* _DRM_PCI_H_ */
+EOF
+
+    # Create drm_device.h with updated PCI info
     cat <<EOF >"$workdir/include/libdrm/drm/drm_device.h"
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
 
 #include "drm_base_types.h"
+#include "drm_pci.h"
 
 typedef struct _drmDevice {
     char **nodes;
     int available_nodes;
     int bustype;
     union {
-        struct {
-            uint16_t vendor;
-            uint16_t device;
-            uint16_t subsystem_vendor;
-            uint16_t subsystem_device;
-            uint8_t revision;
-        } pci;
+        struct drm_pci_info pci;
     } businfo;
 } drmDevice, *drmDevicePtr;
 
 #endif /* _DRM_DEVICE_H_ */
+EOF
+
+    # Create drm_uapi.h for core DRM definitions
+    cat <<EOF >"$workdir/include/libdrm/drm/drm_uapi.h"
+#ifndef _DRM_UAPI_H_
+#define _DRM_UAPI_H_
+
+/* Skip redefining enums that are already in drm-uapi/drm.h */
+#ifndef DRM_DRAWABLE_CLIPRECTS
+enum drm_drawable_info_type {
+    DRM_DRAWABLE_CLIPRECTS
+};
+typedef enum drm_drawable_info_type drm_drawable_info_type_t;
+#endif
+
+#endif /* _DRM_UAPI_H_ */
+EOF
+
+    # Update main drm.h
+    cat <<EOF >"$workdir/include/libdrm/drm/drm.h"
+#ifndef _DRM_H_
+#define _DRM_H_
+
+#include "drm_base_types.h"
+#include "drm_uapi.h"
+#include "drm_pci.h"
+#include "drm_device.h"
+#include "drm_syncobj.h"
+#include "drm_stub.h"
+
+#endif /* _DRM_H_ */
 EOF
 
     # Create stub implementation header
@@ -268,28 +316,31 @@ int drmGetCap(int fd, uint64_t capability, uint64_t *value);
 #endif /* _DRM_SYNCOBJ_H_ */
 EOF
 
-    # Update main drm.h
-    cat <<EOF >"$workdir/include/libdrm/drm/drm.h"
-#ifndef _DRM_H_
-#define _DRM_H_
-
-#include "drm_base_types.h"
-#include "drm_device.h"
-#include "drm_syncobj.h"
-#include "drm_stub.h"
-
-#endif /* _DRM_H_ */
-EOF
-
-    # Create stub implementation
+    # Update drm_stub.c to use proper types
     cat <<EOF >"$workdir/drm_stub.c"
 #include "drm/drm.h"
 #include <stddef.h>
+#include <string.h>
 
 int drmGetNodeTypeFromFd(int fd) { return -1; }
 char *drmGetDeviceNameFromFd2(int fd) { return NULL; }
-int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) { return -1; }
-void drmFreeDevice(drmDevicePtr *device) { }
+int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) { 
+    if (device) {
+        *device = calloc(1, sizeof(drmDevice));
+        if (*device) {
+            memset(&(*device)->businfo.pci, 0, sizeof(struct drm_pci_info));
+        }
+    }
+    return -1; 
+}
+void drmFreeDevice(drmDevicePtr *device) { 
+    if (device && *device) {
+        free(*device);
+        *device = NULL;
+    }
+}
+
+/* Rest of stub implementations */
 int drmGetMagic(int fd, drm_magic_t *magic) { return -1; }
 int drmAuthMagic(int fd, drm_magic_t magic) { return -1; }
 int drmCreateContext(int fd, drm_context_t *handle) { return -1; }
