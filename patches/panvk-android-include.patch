@@ -1,10 +1,13 @@
 --- a/src/panfrost/vulkan/panvk_android.c
 +++ b/src/panfrost/vulkan/panvk_android.c
-@@ -25,6 +25,7 @@
+@@ -22,6 +22,7 @@
+  *
+  */
+ 
++#include <string.h>
  #include <hardware/hwvulkan.h>
  #include <vulkan/vk_android_native_buffer.h>
  #include <vulkan/vulkan.h>
-+#include <string.h>
  
  #include "panvk_android.h"
  #include "panvk_device.h"
