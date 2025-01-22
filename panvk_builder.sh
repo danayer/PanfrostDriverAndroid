@@ -241,6 +241,29 @@ int drmDestroyDrawable(int fd, drm_drawable_t handle);
 #endif /* _DRM_STUB_H_ */
 EOF
 
+    # Create drm_syncobj.h with sync object definitions
+    cat <<EOF >"$workdir/include/libdrm/drm/drm_syncobj.h"
+#ifndef _DRM_SYNCOBJ_H_
+#define _DRM_SYNCOBJ_H_
+
+#define DRM_SYNCOBJ_CREATE_SIGNALED        (1 << 0)
+#define DRM_SYNCOBJ_WAIT_FLAGS_WAIT_ALL    (1 << 0)
+#define DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT (1 << 1)
+#define DRM_SYNCOBJ_WAIT_FLAGS_WAIT_AVAILABLE  (1 << 2)
+
+/* Capability definitions */
+#define DRM_CAP_SYNCOBJ_TIMELINE   0x14
+
+int drmSyncobjCreate(int fd, uint32_t flags, uint32_t *handle);
+int drmSyncobjDestroy(int fd, uint32_t handle);
+int drmSyncobjWait(int fd, uint32_t *handles, unsigned num_handles,
+                   int64_t timeout_nsec, unsigned flags,
+                   uint32_t *first_signaled);
+int drmGetCap(int fd, uint64_t capability, uint64_t *value);
+
+#endif /* _DRM_SYNCOBJ_H_ */
+EOF
+
     # Update main drm.h
     cat <<EOF >"$workdir/include/libdrm/drm/drm.h"
 #ifndef _DRM_H_
@@ -248,6 +271,7 @@ EOF
 
 #include "drm_base_types.h"
 #include "drm_device.h"
+#include "drm_syncobj.h"
 #include "drm_stub.h"
 
 #endif /* _DRM_H_ */
@@ -268,6 +292,12 @@ int drmCreateContext(int fd, drm_context_t *handle) { return -1; }
 void drmFreeReservedContextList(drm_context_t *pt) { }
 int drmCreateDrawable(int fd, drm_drawable_t *handle) { return -1; }
 int drmDestroyDrawable(int fd, drm_drawable_t handle) { return -1; }
+int drmSyncobjCreate(int fd, uint32_t flags, uint32_t *handle) { return -1; }
+int drmSyncobjDestroy(int fd, uint32_t handle) { return -1; }
+int drmSyncobjWait(int fd, uint32_t *handles, unsigned num_handles,
+                   int64_t timeout_nsec, unsigned flags,
+                   uint32_t *first_signaled) { return -1; }
+int drmGetCap(int fd, uint64_t capability, uint64_t *value) { return -1; }
 EOF
 
     # Create pkgconfig directory and libdrm.pc file
@@ -373,6 +403,12 @@ int drmCreateContext(int fd, drm_context_t *handle) { return -1; }
 void drmFreeReservedContextList(drm_context_t *pt) { }
 int drmCreateDrawable(int fd, drm_drawable_t *handle) { return -1; }
 int drmDestroyDrawable(int fd, drm_drawable_t handle) { return -1; }
+int drmSyncobjCreate(int fd, uint32_t flags, uint32_t *handle) { return -1; }
+int drmSyncobjDestroy(int fd, uint32_t handle) { return -1; }
+int drmSyncobjWait(int fd, uint32_t *handles, unsigned num_handles,
+                   int64_t timeout_nsec, unsigned flags,
+                   uint32_t *first_signaled) { return -1; }
+int drmGetCap(int fd, uint64_t capability, uint64_t *value) { return -1; }
 EOF
 
     # Create lib directory and compile
