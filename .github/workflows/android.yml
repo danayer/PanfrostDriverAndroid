@@ -17,7 +17,7 @@ jobs:
 
     steps:
         
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Build
         run: |
@@ -47,7 +47,7 @@ jobs:
             --prefix=/tmp/pan \
             --cross-file "build-crossfile" \
             -Dplatforms=android \
-            -Dplatform-sdk-version=26 \
+            -Dplatform-sdk-version=34 \
             -Dandroid-stub=true \
             -Dllvm=disabled \
             -Dxlib-lease=disabled \
@@ -56,12 +56,12 @@ jobs:
             -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
-            -Dvulkan-drivers= panfrost\
-            -Dgallium-drivers=swrast,panfrost \
+            -Dvulkan-drivers=panfrost,swrast,virtio \
+            -Dgallium-drivers=softpipe,llvmpipe,virgl,panfrost \
             -Dshared-glapi=false
           ninja -C "build-android" install
       - name: Upload libraries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: panfrost_${{matrix.arch}}
           path: /tmp/pan
