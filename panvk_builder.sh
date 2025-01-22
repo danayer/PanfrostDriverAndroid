@@ -10,7 +10,29 @@ ndkver="android-ndk-r27"
 sdkver="33"
 mesasrc="https://gitlab.freedesktop.org/mesa/mesa.git"
 
-# ...existing code...
+base_patches=()
+experimental_patches=()
+failed_patches=()
+commit=""
+commit_short=""
+mesa_version=""
+vulkan_version=""
+
+check_deps() {
+    # ...existing code...
+}
+
+prepare_workdir() {
+    # ...existing code...
+}
+
+apply_patches() {
+    # ...existing code...
+}
+
+patch_to_description() {
+    # ...existing code...
+}
 
 build_lib_for_android(){
     # ...existing code...
@@ -63,4 +85,24 @@ EOF
     # ...rest of existing code with panvk instead of turnip in strings...
 }
 
+prep() {
+    prepare_workdir "$1"
+    build_lib_for_android
+    port_lib_for_adrenotool "$1"
+}
+
+run_all() {
+    check_deps
+    prep
+
+    if (( ${#base_patches[@]} )); then
+        prep "patched"
+    fi
+ 
+    if (( ${#experimental_patches[@]} )); then
+        prep "experimental"
+    fi
+}
+
+# Execute the main function
 run_all
