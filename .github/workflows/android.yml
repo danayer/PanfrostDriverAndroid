@@ -89,3 +89,39 @@ jobs:
         with:
           name: panfrost_${{matrix.arch}}
           path: /tmp/pan
+
+      - name: Package libraries
+        if: matrix.arch == 'aarch64'  # Only run once after both builds complete
+        run: |
+          cd /tmp/pan
+          tar czf panfrost_${{matrix.arch}}.tar.gz *
+          cd $GITHUB_WORKSPACE
+          mv /tmp/pan/panfrost_${{matrix.arch}}.tar.gz .
+          
+      - name: Create Release
+        if: matrix.arch == 'aarch64'  # Only run once after both builds complete
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get current date in YYYY-MM-DD format
+          TODAY=$(date '+%Y-%m-%d')
+          
+          # Create release
+          gh release create $TODAY \
+            --title "Build $TODAY" \
+            --notes "Automated build for $TODAY" \
+            --draft=false \
+            panfrost_${{matrix.arch}}.tar.gz
+
+      - name: Download and attach arm32 artifacts
+        if: matrix.arch == 'aarch64'  # Only run once after both builds complete
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TODAY=$(date '+%Y-%m-%d')
+          # Download arm32 artifact
+          gh run download --dir /tmp/arm32
+          cd /tmp/arm32
+          tar czf panfrost_arm32.tar.gz *
+          # Upload to release
+          gh release upload $TODAY panfrost_arm32.tar.gz
