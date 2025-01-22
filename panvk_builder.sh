@@ -85,11 +85,45 @@ prepare_workdir(){
 }
 
 apply_patches() {
-    # ...existing code...
+    local arr=("$@")
+    for patch in "${arr[@]}"; do
+        echo "Applying patch $patch"
+        patch_source="$(echo $patch | cut -d ";" -f 2 | xargs)"
+        patch_args=$(echo $patch | cut -d ";" -f 3 | xargs)
+        if [[ $patch_source == *"../.."* ]]; then
+            if git apply $patch_args "$patch_source"; then
+                echo "Patch applied successfully"
+            else
+                echo "Failed to apply $patch"
+                failed_patches+=("$patch")
+            fi
+        else 
+            patch_file="${patch_source#*\/}"
+            curl --output "../$patch_file".patch -k --retry-delay 30 --retry 5 -f --retry-all-errors https://gitlab.freedesktop.org/mesa/mesa/-/"$patch_source".patch
+            sleep 1
+
+            if git apply $patch_args "../$patch_file".patch ; then
+                echo "Patch applied successfully"
+            else
+                echo "Failed to apply $patch"
+                failed_patches+=("$patch")
+            fi
+        fi
+    done
 }
 
 patch_to_description() {
-    # ...existing code...
+    local arr=("$@")
+    for patch in "${arr[@]}"; do
+        patch_name="$(echo $patch | cut -d ";" -f 1 | xargs)"
+        patch_source="$(echo $patch | cut -d ";" -f 2 | xargs)"
+        patch_args="$(echo $patch | cut -d ";" -f 3 | xargs)"
+        if [[ $patch_source == *"../.."* ]]; then
+            echo "- $patch_name, $patch_source, $patch_args" >> description
+        else 
+            echo "- $patch_name, [$patch_source](https://gitlab.freedesktop.org/mesa/mesa/-/$patch_source), $patch_args" >> description
+        fi
+    done
 }
 
 build_lib_for_android(){
