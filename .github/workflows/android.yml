@@ -37,16 +37,27 @@ jobs:
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
           
-          # Fix blake3 implementation with sed
-          # Add declarations to blake3_impl.h
-          sed -i '1i\#include <stdint.h>' src/util/blake3/blake3_impl.h
+          # Fix blake3 implementation
+          # 1. First remove any existing blake3_hash_many_neon implementations
+          sed -i '/^void blake3_hash_many_neon(.*$/,/^}$/d' src/util/blake3/blake3_dispatch.c
+          
+          # 2. Add the correct implementation at the end of the file
+          cat >> src/util/blake3/blake3_dispatch.c << 'EOL'
+
+          #if BLAKE3_USE_NEON == 1
+          void blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs,
+                                   size_t blocks, const uint32_t key[8], uint64_t counter,
+                                   bool increment_counter, uint8_t flags,
+                                   uint8_t flags_start, uint8_t flags_end, uint8_t *out) {
+              blake3_hash_many_portable(inputs, num_inputs, blocks, key, counter,
+                                      increment_counter, flags, flags_start, flags_end, out);
+          }
+          #endif
+          EOL
+          
+          # 3. Add declaration to blake3_impl.h if not exists
+          grep -q "void blake3_hash_many_neon" src/util/blake3/blake3_impl.h || \
           sed -i '/^#if BLAKE3_USE_NEON == 1/a void blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out);' src/util/blake3/blake3_impl.h
-          
-          # Fix blake3_dispatch.c - add single implementation
-          sed -i '/^#if BLAKE3_USE_NEON == 1/,/^#endif/c\#if BLAKE3_USE_NEON == 1\nvoid blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out) {\n  blake3_hash_many_portable(inputs, num_inputs, blocks, key, counter, increment_counter, flags, flags_start, flags_end, out);\n}\n#endif' src/util/blake3/blake3_dispatch.c
-          
-          # Add missing include to panvk_android.c
-          sed -i '/#include <stdlib.h>/a #include <string.h>' src/panfrost/vulkan/panvk_android.c
           
           # Rest of the build process
           envsubst <$GITHUB_WORKSPACE/android-drm-${{matrix.arch}} >build-crossfile-drm
