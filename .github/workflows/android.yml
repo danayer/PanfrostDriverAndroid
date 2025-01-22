@@ -37,9 +37,6 @@ jobs:
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
           
-          # Apply the patch for panvk_android.c
-          patch -p1 < $GITHUB_WORKSPACE/patches/panvk-android-include.patch
-          
           # Rest of the build process
           envsubst <$GITHUB_WORKSPACE/android-drm-${{matrix.arch}} >build-crossfile-drm
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
