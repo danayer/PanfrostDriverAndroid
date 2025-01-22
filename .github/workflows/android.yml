@@ -84,7 +84,7 @@ jobs:
             -Dglvnd=disabled \
             -Dosmesa=true \
             -Dvulkan-drivers=panfrost,virtio \
-            -Dgallium-drivers=softpipe,virgl,panfrost \
+            -Dgallium-drivers=softpipe,virgl,panfrost,zink \
             -Dshared-glapi=enabled \
             -Dgles-lib-suffix=_mesa
           ninja -C "build-android" install
