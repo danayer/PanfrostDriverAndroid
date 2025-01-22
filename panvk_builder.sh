@@ -203,23 +203,21 @@ EOF
 
 #include "drm_base_types.h"
 
-/* Exact structure layout that Mesa expects */
 typedef struct _drmDevice {
-    char **nodes;             /* Path of /dev/dri/... nodes, saved for dup */
-    int available_nodes;      /* Number of nodes */
-    int bustype;             /* Type of bus (PCI, USB, ...) */
-    int deviceinfo;          /* Type of device (GPU, ...) */
-    struct {                 /* PCI device info */
-        unsigned domain;
-        unsigned bus;
-        unsigned dev;
-        unsigned func;
-        unsigned vendor_id;
-        unsigned device_id;
-        unsigned subvendor_id;
-        unsigned subdevice_id;
-        unsigned revision_id;
-    } pci;
+    char **nodes;
+    int available_nodes;
+    int bustype;             /* DRM_BUS_PCI = 0 */
+    struct {
+        unsigned int domain;
+        unsigned int bus;
+        unsigned int dev;
+        unsigned int func;
+        unsigned int vendor_id;
+        unsigned int device_id;
+        unsigned int subvendor_id;
+        unsigned int subdevice_id;
+        unsigned int revision_id;
+    } businfo;  /* Direct PCI info, not a pointer */
 } drmDevice, *drmDevicePtr;
 
 #endif /* _DRM_DEVICE_H_ */
@@ -375,8 +373,8 @@ int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) {
     if (device) {
         *device = calloc(1, sizeof(drmDevice));
         if (*device) {
-            (*device)->bustype = 0;  // PCI
-            memset(&(*device)->pci, 0, sizeof(struct drm_pci_bus_info));
+            (*device)->bustype = 0;  // DRM_BUS_PCI
+            memset(&(*device)->businfo, 0, sizeof((*device)->businfo));
         }
     }
     return -1; 
