@@ -24,8 +24,19 @@ jobs:
           sudo apt update
           sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
           pip3 install mako
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
-          envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
+          
+          # Setup Android NDK
+          wget https://dl.google.com/android/repository/android-ndk-r27c-linux.zip
+          unzip android-ndk-r27c-linux.zip
+          export ANDROID_NDK_HOME=$PWD/android-ndk-r27c
+          export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
+          
+          # Clone Mesa repository
+          git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
+          cd mesa
+          
+          # Rest of the build process
+          envsubst <../android-drm-${{matrix.arch}} >build-crossfile-drm
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
           cd drm
           meson setup "build-android" \
