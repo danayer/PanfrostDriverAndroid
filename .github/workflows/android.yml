@@ -70,7 +70,7 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers=panfrost,swrast,virtio \
-            -Dgallium-drivers=softpipe,llvmpipe,virgl,panfrost \
+            -Dgallium-drivers=softpipe,virgl,panfrost \
             -Dshared-glapi=disabled
           ninja -C "build-android" install
       - name: Upload libraries
