@@ -66,6 +66,15 @@ prepare_workdir(){
         git clone --depth=1 "$mesasrc"
 
         cd mesa
+        
+        # Apply warning fixes patch if it exists
+        if [ -f "../fix_warnings.patch" ]; then
+            echo "Applying warning fixes patch..."
+            git apply ../fix_warnings.patch || {
+                echo "Warning: Failed to apply fixes patch"
+            }
+        fi
+
         commit_short=$(git rev-parse --short HEAD)
         commit=$(git rev-parse HEAD)
         mesa_version=$(cat VERSION | xargs)
