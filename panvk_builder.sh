@@ -128,14 +128,27 @@ patch_to_description() {
 
 build_lib_for_android(){
     echo "Creating meson cross file ..." $'\n'
-    # Fix syntax error in if condition
     if [ -z "${ANDROID_NDK_LATEST_HOME}" ]; then
         ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
     else    
         ndk="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
     fi
 
-    # Create cross file in mesa directory
+    # Create pkgconfig directory and libdrm.pc file
+    mkdir -p "$workdir/pkgconfig"
+    cat <<EOF >"$workdir/pkgconfig/libdrm.pc"
+prefix=/usr
+libdir=\${prefix}/lib/aarch64-linux-android
+includedir=\${prefix}/include
+
+Name: libdrm
+Description: Userspace interface to kernel DRM services
+Version: 2.4.110
+Libs: -L\${libdir} -ldrm
+Cflags: -I\${includedir} -I\${includedir}/libdrm
+EOF
+
+    # Create cross file with updated pkg-config settings
     cat <<EOF >"$workdir/mesa/android-aarch64"
 [binaries]
 ar = '$ndk/llvm-ar'
@@ -144,7 +157,7 @@ cpp = ['ccache', '$ndk/aarch64-linux-android$sdkver-clang++']
 c_ld = 'lld'
 cpp_ld = 'lld'
 strip = '$ndk/aarch64-linux-android-strip'
-pkg-config = ['env', 'PKG_CONFIG_LIBDIR=NDKDIR/pkgconfig', '/usr/bin/pkg-config']
+pkg-config = ['env', 'PKG_CONFIG_LIBDIR=$workdir/pkgconfig', '/usr/bin/pkg-config']
 [host_machine]
 system = 'android'
 cpu_family = 'aarch64'
@@ -159,7 +172,8 @@ EOF
         exit 1
     }
 
-    # Updated Meson configuration with correct options
+    # Run meson with updated pkgconfig environment
+    PKG_CONFIG_PATH="$workdir/pkgconfig" \
     CFLAGS="-O2" \
     CXXFLAGS="-O2 -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables" \
     meson setup build-android-aarch64 \
