@@ -168,12 +168,13 @@ build_lib_for_android(){
     # Update include paths
     sed -i 's|<drm.h>|"drm/drm.h"|g' "$workdir/include/libdrm/xf86drm.h"
 
-    # Create base types header first
+    # Create base types header first, with proper guards
     cat <<EOF >"$workdir/include/libdrm/drm/drm_base_types.h"
 #ifndef _DRM_BASE_TYPES_H_
 #define _DRM_BASE_TYPES_H_
 
 #include <stdint.h>
+#include "../../../include/drm-uapi/drm.h"
 
 /* Basic DRM types */
 typedef unsigned int drm_handle_t;
@@ -181,12 +182,60 @@ typedef unsigned int drm_context_t;
 typedef unsigned int drm_magic_t;
 typedef unsigned int drm_drawable_t;
 
-/* Drawable info types */
+/* Use existing enums from drm-uapi/drm.h instead of redefining */
+#ifndef DRM_DRAWABLE_INFO_TYPE_DEFINED
+#define DRM_DRAWABLE_INFO_TYPE_DEFINED
+/* Only define if not already defined in drm-uapi/drm.h */
+#ifndef drm_drawable_info_type_t
 typedef enum {
-    DRM_DRAWABLE_CLIPRECTS
-} drm_drawable_info_type_t;
+    DRM_DRAWABLE_CLIPRECTS_DEPRECATED  /* Use the one from drm-uapi/drm.h instead */
+} drm_drawable_info_type_deprecated_t;
+#endif
+#endif
 
 #endif /* _DRM_BASE_TYPES_H_ */
+EOF
+
+    # Create device types header with PCI info
+    cat <<EOF >"$workdir/include/libdrm/drm/drm_device.h"
+#ifndef _DRM_DEVICE_H_
+#define _DRM_DEVICE_H_
+
+#include "drm_base_types.h"
+
+typedef struct _drmDevice {
+    char **nodes;
+    int available_nodes;
+    int bustype;
+    union {
+        struct {
+            uint32_t domain;    /* PCI domain */
+            uint32_t bus;       /* PCI bus */
+            uint32_t dev;       /* PCI device */
+            uint32_t func;      /* PCI function */
+            uint16_t vendor;    /* PCI vendor id */
+            uint16_t device;    /* PCI device id */
+        } *pci;                /* Use pointer to match Mesa's expectations */
+    } businfo;
+} drmDevice, *drmDevicePtr;
+
+#endif /* _DRM_DEVICE_H_ */
+EOF
+
+    # Update drm.h to include in correct order
+    cat <<EOF >"$workdir/include/libdrm/drm/drm.h"
+#ifndef _DRM_H_
+#define _DRM_H_
+
+/* Include Mesa's DRM headers first */
+#include "../../../include/drm-uapi/drm.h"
+
+/* Then our local headers */
+#include "drm_base_types.h"
+#include "drm_device.h"
+#include "drm_syncobj.h"
+
+#endif /* _DRM_H_ */
 EOF
 
     # Create drm_pci.h for PCI device info
