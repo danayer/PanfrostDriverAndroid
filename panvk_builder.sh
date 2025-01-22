@@ -159,7 +159,7 @@ EOF
         exit 1
     }
 
-    # Run meson with correct options for PanVK
+    # Run meson with corrected options for PanVK
     meson setup build-android-aarch64 \
         --cross-file android-aarch64 \
         -Dbuildtype=release \
@@ -170,7 +170,7 @@ EOF
         -Dvulkan-drivers=panfrost \
         -Dllvm=disabled \
         -Dshared-llvm=disabled \
-        -Dfreedreno-kmsro=false \
+        -Dpanfrost-version-override=7.1 \
         -Dperfetto=false \
         -Dvulkan-beta=true \
         -Dbuild-aco-tests=false \
