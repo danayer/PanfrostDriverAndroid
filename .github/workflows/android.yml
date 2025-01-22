@@ -69,7 +69,7 @@ jobs:
             -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
-            -Dvulkan-drivers=panfrost,swrast,virtio \
+            -Dvulkan-drivers=panfrost,virtio \
             -Dgallium-drivers=softpipe,virgl,panfrost \
             -Dshared-glapi=disabled
           ninja -C "build-android" install
