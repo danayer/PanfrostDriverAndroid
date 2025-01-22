@@ -1,0 +1,42 @@
+diff --git a/src/panfrost/util/pan_lower_xfb.c b/src/panfrost/util/pan_lower_xfb.c
+index abc1234..def5678 100644
+--- a/src/panfrost/util/pan_lower_xfb.c
++++ b/src/panfrost/util/pan_lower_xfb.c
+@@ -57,7 +57,7 @@
+-   nir_component_mask_t write_mask = ~0;
++   nir_component_mask_t write_mask = (nir_component_mask_t)0xFFFF;
+
+diff --git a/src/panfrost/vulkan/panvk_vX_nir_lower_descriptors.c b/src/panfrost/vulkan/panvk_vX_nir_lower_descriptors.c
+index abc1234..def5678 100644
+--- a/src/panfrost/vulkan/panvk_vX_nir_lower_descriptors.c
++++ b/src/panfrost/vulkan/panvk_vX_nir_lower_descriptors.c
+@@ -1216,7 +1216,7 @@ panvk_per_arch(nir_lower_descriptors)(nir_shader *nir,
+                                    const VkAllocationCallbacks *alloc)
+ {
+    struct lower_descriptors_ctx ctx = { .dev = dev };
+-   bool progress;
++   bool progress = false;
+
+diff --git a/src/panfrost/vulkan/jm/panvk_vX_cmd_draw.c b/src/panfrost/vulkan/jm/panvk_vX_cmd_draw.c
+index abc1234..def5678 100644
+--- a/src/panfrost/vulkan/jm/panvk_vX_cmd_draw.c
++++ b/src/panfrost/vulkan/jm/panvk_vX_cmd_draw.c
+@@ -280,8 +280,8 @@ setup_zs_shader_info(struct panvk_cmd_buffer *cmdbuf,
+       struct pan_earlyzs earlyzs =
+          pan_earlyzs_get(depth_stencil->zs);
+ 
+-         cfg.properties.pixel_kill_operation = earlyzs.kill;
+-         cfg.properties.zs_update_operation = earlyzs.update;
++         cfg.properties.pixel_kill_operation = (enum mali_pixel_kill)earlyzs.kill;
++         cfg.properties.zs_update_operation = (enum mali_pixel_kill)earlyzs.update;
+
+diff --git a/src/panfrost/lib/genxml/cs_builder.h b/src/panfrost/lib/genxml/cs_builder.h
+index abc1234..def5678 100644
+--- a/src/panfrost/lib/genxml/cs_builder.h
++++ b/src/panfrost/lib/genxml/cs_builder.h
+@@ -1569,7 +1569,7 @@ cs_src_tuple(struct cs_builder *b, struct cs_reg_tuple regs, uint32_t size,
+              uint32_t mask)
+ {
+    /* Ensure mask fits in uint16_t */
+-   cs_src_tuple(b, regs, regs.size, (uint16_t)(BITFIELD_MASK(regs.size)));
++   cs_src_tuple(b, regs, regs.size, (uint16_t)(BITFIELD_MASK(regs.size) & 0xFFFF));
