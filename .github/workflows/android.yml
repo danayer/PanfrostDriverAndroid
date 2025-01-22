@@ -38,11 +38,12 @@ jobs:
           cd mesa
           
           # Fix blake3 implementation with sed
+          # Add declarations to blake3_impl.h
           sed -i '1i\#include <stdint.h>' src/util/blake3/blake3_impl.h
-          sed -i '/blake3_hash_many_portable/i\void blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out);' src/util/blake3/blake3_impl.h
+          sed -i '/^#if BLAKE3_USE_NEON == 1/a void blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out);' src/util/blake3/blake3_impl.h
           
-          # Add NEON implementation
-          sed -i '/^#endif/i\\n#if BLAKE3_USE_NEON == 1\nvoid blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out) {\n  blake3_hash_many_portable(inputs, num_inputs, blocks, key, counter, increment_counter, flags, flags_start, flags_end, out);\n}\n#endif' src/util/blake3/blake3_dispatch.c
+          # Fix blake3_dispatch.c - add single implementation
+          sed -i '/^#if BLAKE3_USE_NEON == 1/,/^#endif/c\#if BLAKE3_USE_NEON == 1\nvoid blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out) {\n  blake3_hash_many_portable(inputs, num_inputs, blocks, key, counter, increment_counter, flags, flags_start, flags_end, out);\n}\n#endif' src/util/blake3/blake3_dispatch.c
           
           # Add missing include to panvk_android.c
           sed -i '/#include <stdlib.h>/a #include <string.h>' src/panfrost/vulkan/panvk_android.c
