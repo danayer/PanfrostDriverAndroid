@@ -159,7 +159,7 @@ EOF
         exit 1
     }
 
-    # Updated Meson configuration
+    # Updated Meson configuration without problematic builtin definitions
     meson setup build-android-aarch64 \
         --cross-file android-aarch64 \
         -Dbuildtype=release \
@@ -176,8 +176,8 @@ EOF
         -Dandroid-libbacktrace=disabled \
         -Db_ndebug=true \
         -Db_lto=false \
-        -Dc_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71 -D__builtin_popcount=__builtin_popcount -D__builtin_popcountll=__builtin_popcountll -D__builtin_unreachable=__builtin_unreachable" \
-        -Dcpp_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71 -D__builtin_popcount=__builtin_popcount -D__builtin_popcountll=__builtin_popcountll -D__builtin_unreachable=__builtin_unreachable" \
+        -Dc_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71" \
+        -Dcpp_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71" \
         -Dc_link_args="-lm -fuse-ld=lld -Wl,--undefined-version" \
         -Dcpp_link_args="-lm -fuse-ld=lld -Wl,--undefined-version" &> "$workdir"/meson_log || {
             echo -e "$red Meson configuration failed! $nocolor"
