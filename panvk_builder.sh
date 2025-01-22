@@ -192,6 +192,44 @@ Libs: -L\${libdir} -ldrm
 Cflags: -I\${includedir}/libdrm -I\${includedir}/libdrm/drm
 EOF
 
+    # Create stub libdrm library
+    echo "Creating stub libdrm library..."
+    mkdir -p "$workdir/lib"
+    
+    # Create a minimal C file with required symbols
+    cat <<EOF >"$workdir/drm_stub.c"
+#include <stdint.h>
+
+// Stub functions - minimal implementation
+int drmGetNodeTypeFromFd(int fd) { return -1; }
+char *drmGetDeviceNameFromFd2(int fd) { return 0; }
+int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) { return -1; }
+void drmFreeDevice(drmDevicePtr *device) { }
+EOF
+
+    # Compile stub library
+    if [ -z "${ANDROID_NDK_LATEST_HOME}" ]; then
+        ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
+    else    
+        ndk="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+    fi
+    
+    "$ndk/aarch64-linux-android$sdkver-clang" -c -o "$workdir/drm_stub.o" "$workdir/drm_stub.c" -I"$workdir/include/libdrm"
+    "$ndk/llvm-ar" rcs "$workdir/lib/libdrm.a" "$workdir/drm_stub.o"
+
+    # Update pkgconfig file with correct lib path
+    cat <<EOF >"$workdir/pkgconfig/libdrm.pc"
+prefix=$workdir
+libdir=\${prefix}/lib
+includedir=\${prefix}/include/libdrm
+
+Name: libdrm
+Description: Userspace interface to kernel DRM services
+Version: 2.4.110
+Libs: -L\${libdir} -ldrm
+Cflags: -I\${includedir}
+EOF
+
     # Create cross file with updated include paths
     cat <<EOF >"$workdir/mesa/android-aarch64"
 [binaries]
