@@ -37,10 +37,8 @@ jobs:
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
           
-          # Create and apply patch directly
-          echo '#include <string.h>' > temp_include
-          cat src/panfrost/vulkan/panvk_android.c >> temp_include
-          mv temp_include src/panfrost/vulkan/panvk_android.c
+          # Create and apply patch directly using sed
+          sed -i '/#include <stdlib.h>/a #include <string.h>' src/panfrost/vulkan/panvk_android.c
           git diff > $GITHUB_WORKSPACE/patches/panvk-android-include.patch
           git apply $GITHUB_WORKSPACE/patches/panvk-android-include.patch
           
