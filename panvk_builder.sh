@@ -262,17 +262,62 @@ typedef struct _drmDevice {
 #endif /* _DRM_H_ */
 EOF
 
-    # Create stub libdrm library
-    echo "Creating stub libdrm library..."
-    mkdir -p "$workdir/lib"
-    
-    cat <<EOF >"$workdir/drm_stub.c"
-#include "drm_stub.h"
+    # Create a single header for all DRM types and definitions
+    cat <<EOF >"$workdir/include/libdrm/drm/drm_all.h"
+#ifndef _DRM_ALL_H_
+#define _DRM_ALL_H_
+
 #include <stdint.h>
 
-// Stub functions - minimal implementation
+/* Basic type definitions */
+typedef unsigned int drm_handle_t;
+typedef unsigned int drm_context_t;
+typedef unsigned int drm_magic_t;
+
+/* Device structure */
+typedef struct _drmDevice {
+    char **nodes;
+    int available_nodes;
+    int bustype;
+    union {
+        struct {
+            uint16_t vendor;
+            uint16_t device;
+            uint16_t subsystem_vendor;
+            uint16_t subsystem_device;
+            uint8_t revision;
+        } pci;
+    } businfo;
+} drmDevice, *drmDevicePtr;
+
+/* Function declarations */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int drmGetNodeTypeFromFd(int fd);
+char *drmGetDeviceNameFromFd2(int fd);
+int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device);
+void drmFreeDevice(drmDevicePtr *device);
+int drmGetMagic(int fd, drm_magic_t *magic);
+int drmAuthMagic(int fd, drm_magic_t magic);
+int drmCreateContext(int fd, drm_context_t *handle);
+void drmFreeReservedContextList(drm_context_t *pt);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _DRM_ALL_H_ */
+EOF
+
+    # Create stub library implementation
+    cat <<EOF >"$workdir/drm_stub.c"
+#include "drm/drm_all.h"
+#include <stddef.h>
+
 int drmGetNodeTypeFromFd(int fd) { return -1; }
-char *drmGetDeviceNameFromFd2(int fd) { return 0; }
+char *drmGetDeviceNameFromFd2(int fd) { return NULL; }
 int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) { return -1; }
 void drmFreeDevice(drmDevicePtr *device) { }
 int drmGetMagic(int fd, drm_magic_t *magic) { return -1; }
@@ -281,9 +326,15 @@ int drmCreateContext(int fd, drm_context_t *handle) { return -1; }
 void drmFreeReservedContextList(drm_context_t *pt) { }
 EOF
 
-    # Update include paths and compile
-    cp "$workdir/drm_stub.h" "$workdir/include/libdrm/drm/drm.h"
-    "$ndk/aarch64-linux-android$sdkver-clang" -c -o "$workdir/drm_stub.o" "$workdir/drm_stub.c" -I"$workdir/include/libdrm"
+    # Update symlinks and compile
+    ln -sf "$workdir/include/libdrm/drm/drm_all.h" "$workdir/include/libdrm/drm/drm.h"
+    ln -sf "$workdir/include/libdrm/drm/drm_all.h" "$workdir/include/libdrm/drm/drm_types.h"
+
+    # Compile with proper include paths
+    "$ndk/aarch64-linux-android$sdkver-clang" -c -o "$workdir/drm_stub.o" "$workdir/drm_stub.c" \
+        -I"$workdir/include/libdrm" \
+        -fPIC -Wno-unused-parameter
+
     "$ndk/llvm-ar" rcs "$workdir/lib/libdrm.a" "$workdir/drm_stub.o"
 
     # Update pkgconfig file with correct lib path
