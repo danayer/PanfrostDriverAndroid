@@ -75,14 +75,18 @@ jobs:
             -Dandroid-stub=true \
             -Dllvm=disabled \
             -Dxlib-lease=disabled \
-            -Degl=disabled \
-            -Dgbm=disabled \
-            -Dglx=disabled \
+            -Degl=enabled \
+            -Dgbm=enabled \
+            -Dglx=enabled \
             -Dopengl=true \
+            -Dgles1=enabled \
+            -Dgles2=enabled \
+            -Dglvnd=true \
             -Dosmesa=true \
             -Dvulkan-drivers=panfrost,virtio \
             -Dgallium-drivers=softpipe,virgl,panfrost \
-            -Dshared-glapi=disabled
+            -Dshared-glapi=enabled \
+            -Dgles-lib-suffix=_mesa
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v4
