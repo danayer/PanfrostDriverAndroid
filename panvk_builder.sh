@@ -151,34 +151,60 @@ endian = 'little'
 EOF
 
     echo "Generating build files ..." $'\n'
+    cd mesa
     meson setup build-android-aarch64 \
-        --cross-file "$workdir"/mesa/android-aarch64 \
+        --cross-file ../android-aarch64 \
         -Dbuildtype=release \
         -Dplatforms=android \
         -Dplatform-sdk-version=$sdkver \
         -Dandroid-stub=true \
         -Dgallium-drivers= \
         -Dvulkan-drivers=panfrost \
+        -Dllvm=disabled \
+        -Dshared-llvm=disabled \
         -Dpanfrost-kmds=kgsl \
         -Dvulkan-beta=true \
         -Dbuild-aco-tests=false \
         -Dandroid-libbacktrace=disabled \
         -Db_lto=true \
         -Dc_args="-Wno-error" \
-        -Dcpp_args="-Wno-error" &> "$workdir"/meson_log
+        -Dcpp_args="-Wno-error" &> "$workdir"/meson_log || {
+            echo -e "$red Meson configuration failed! $nocolor"
+            cat "$workdir"/meson_log
+            exit 1
+        }
 
     echo "Compiling build files ..." $'\n'
-    ninja -C build-android-aarch64 &> "$workdir"/ninja_log
+    ninja -C build-android-aarch64 &> "$workdir"/ninja_log || {
+        echo -e "$red Build failed! $nocolor"
+        cat "$workdir"/ninja_log
+        exit 1
+    }
 }
 
 port_lib_for_adrenotool(){
     echo "Using patchelf to match soname ..."  $'\n'
     
-    # Check if library exists
-    if [ ! -f "$workdir/mesa/build-android-aarch64/src/panfrost/vulkan/libvulkan_panfrost.so" ]; then
+    BUILD_DIR="$workdir/mesa/build-android-aarch64"
+    PANVK_PATH="$BUILD_DIR/src/panfrost/vulkan"
+    
+    # Check build status
+    if [ ! -d "$BUILD_DIR" ]; then
+        echo -e "$red Build directory not found! $nocolor"
+        exit 1
+    fi
+
+    # List contents of vulkan directory if it exists
+    if [ -d "$BUILD_DIR/src/panfrost" ]; then
+        echo "Contents of panfrost directory:"
+        ls -R "$BUILD_DIR/src/panfrost"
+    fi
+
+    # Check for vulkan driver
+    if [ ! -f "$PANVK_PATH/libvulkan_panfrost.so" ]; then
         echo -e "$red Build failed - libvulkan_panfrost.so not found! $nocolor"
-        echo "Contents of build directory:"
-        ls -R "$workdir/mesa/build-android-aarch64"
+        echo "Build log:"
+        cat "$workdir/ninja_log"
         exit 1
     fi
 
