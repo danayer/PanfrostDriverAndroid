@@ -159,7 +159,9 @@ EOF
         exit 1
     }
 
-    # Updated Meson configuration without problematic builtin definitions
+    # Run meson with updated compiler flags and builtin handling
+    CFLAGS="-fno-builtin" \
+    CXXFLAGS="-fno-builtin" \
     meson setup build-android-aarch64 \
         --cross-file android-aarch64 \
         -Dbuildtype=release \
@@ -176,8 +178,8 @@ EOF
         -Dandroid-libbacktrace=disabled \
         -Db_ndebug=true \
         -Db_lto=false \
-        -Dc_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71" \
-        -Dcpp_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71" \
+        -Dc_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71 -D__BIONIC__" \
+        -Dcpp_args="-O2 -Wno-error -DPANVK_VERSION_OVERRIDE=71 -D__BIONIC__" \
         -Dc_link_args="-lm -fuse-ld=lld -Wl,--undefined-version" \
         -Dcpp_link_args="-lm -fuse-ld=lld -Wl,--undefined-version" &> "$workdir"/meson_log || {
             echo -e "$red Meson configuration failed! $nocolor"
