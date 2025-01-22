@@ -159,9 +159,13 @@ build_lib_for_android(){
         curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/include/drm/$header" -o "$workdir/include/libdrm/drm/$header"
     done
     
+    # Download and modify xf86drm.h to avoid redefinitions
     curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/xf86drm.h" -o "$workdir/include/libdrm/xf86drm.h"
-
-    # Update drm.h include path in xf86drm.h
+    
+    # Remove existing struct definitions from xf86drm.h
+    sed -i '/typedef struct _drmDevice/,/} drmDevice, \*drmDevicePtr;/c\#include "drm/drm_device.h"\n' "$workdir/include/libdrm/xf86drm.h"
+    
+    # Update include paths
     sed -i 's|<drm.h>|"drm/drm.h"|g' "$workdir/include/libdrm/xf86drm.h"
 
     # Create base types header first
