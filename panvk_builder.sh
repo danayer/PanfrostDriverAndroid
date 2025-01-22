@@ -244,38 +244,32 @@ EOF
 #ifndef _DRM_PCI_H_
 #define _DRM_PCI_H_
 
-#include <stdint.h>
-
-struct drm_pci_info {
+struct drm_pci_bus_info {
     uint32_t domain;
     uint32_t bus;
     uint32_t dev;
     uint32_t func;
-    uint16_t vendor;
-    uint16_t device;
-    uint16_t subsystem_vendor;
-    uint16_t subsystem_device;
-    uint8_t revision;
 };
 
 #endif /* _DRM_PCI_H_ */
 EOF
 
-    # Create drm_device.h with updated PCI info
+    # Create drm_device.h with Mesa-compatible structure
     cat <<EOF >"$workdir/include/libdrm/drm/drm_device.h"
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
 
-#include "drm_base_types.h"
 #include "drm_pci.h"
+
+struct drm_device_bus_info {
+    int type;
+    struct drm_pci_bus_info pci;
+};
 
 typedef struct _drmDevice {
     char **nodes;
     int available_nodes;
-    int bustype;
-    union {
-        struct drm_pci_info pci;
-    } businfo;
+    struct drm_device_bus_info *businfo;  /* Pointer to match Mesa's expectations */
 } drmDevice, *drmDevicePtr;
 
 #endif /* _DRM_DEVICE_H_ */
@@ -371,6 +365,7 @@ EOF
 #include "drm/drm.h"
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 int drmGetNodeTypeFromFd(int fd) { return -1; }
 char *drmGetDeviceNameFromFd2(int fd) { return NULL; }
@@ -378,14 +373,14 @@ int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) {
     if (device) {
         *device = calloc(1, sizeof(drmDevice));
         if (*device) {
-            (*device)->businfo.pci = calloc(1, sizeof(struct drm_pci_info));
+            (*device)->businfo = calloc(1, sizeof(struct drm_device_bus_info));
         }
     }
     return -1; 
 }
 void drmFreeDevice(drmDevicePtr *device) { 
     if (device && *device) {
-        free((*device)->businfo.pci);
+        free((*device)->businfo);
         free(*device);
         *device = NULL;
     }
