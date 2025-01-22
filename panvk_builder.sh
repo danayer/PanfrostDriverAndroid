@@ -203,25 +203,30 @@ EOF
 
 #include "drm_base_types.h"
 
-#define DRM_BUS_PCI 0
+#define DRM_NODE_PRIMARY  0
+#define DRM_NODE_CONTROL 1
+#define DRM_NODE_RENDER  2
+#define DRM_NODE_MAX     3
 
-typedef struct _drmPciInfo {
-    uint32_t pciDomain;
-    uint32_t pciBus;
-    uint32_t pciDevice;
-    uint32_t pciFunction;
-    uint32_t pciVendor;
-    uint32_t pciDevice_id;
-    uint32_t pciSubsystem_vendor;
-    uint32_t pciSubsystem_device;
-    uint32_t pciRevision;
-} drmPciInfo;
+#define DRM_BUS_PCI   0
+
+struct drm_pci_bus_info {
+    uint32_t domain;   /* PCI domain */
+    uint32_t bus;      /* PCI bus */
+    uint32_t dev;      /* PCI device */
+    uint32_t func;     /* PCI function */
+};
+
+struct drm_device_bus_info {
+    int type;          /* DRM_BUS_PCI */
+    struct drm_pci_bus_info pci;
+};
 
 typedef struct _drmDevice {
-    char **nodes;
-    int available_nodes;
-    int bustype;               /* DRM_BUS_PCI = 0 */
-    drmPciInfo businfo;        /* Direct PCI bus info */
+    char **nodes;             /* Device node paths */
+    int available_nodes;      /* Number of available nodes */
+    int bustype;             /* DRM_BUS_PCI */
+    struct drm_device_bus_info businfo; /* Direct bus info, not a pointer */
 } drmDevice, *drmDevicePtr;
 
 #endif /* _DRM_DEVICE_H_ */
@@ -378,7 +383,8 @@ int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) {
         *device = calloc(1, sizeof(drmDevice));
         if (*device) {
             (*device)->bustype = DRM_BUS_PCI;
-            memset(&(*device)->businfo, 0, sizeof(drmPciInfo));
+            (*device)->businfo.type = DRM_BUS_PCI;
+            memset(&(*device)->businfo.pci, 0, sizeof(struct drm_pci_bus_info));
         }
     }
     return -1; 
