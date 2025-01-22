@@ -67,10 +67,10 @@ prepare_workdir(){
 
         cd mesa
         
-        # Apply warning fixes patch if it exists
-        if [ -f "../fix_warnings.patch" ]; then
+        # Update path to look for patches in patches directory
+        if [ -f "$workdir/patches/fix_warnings.patch" ]; then
             echo "Applying warning fixes patch..."
-            git apply ../fix_warnings.patch || {
+            git apply "$workdir/patches/fix_warnings.patch" || {
                 echo "Warning: Failed to apply fixes patch"
             }
         fi
