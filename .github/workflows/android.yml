@@ -42,13 +42,8 @@ jobs:
           sed -i '1i\#include <stdint.h>' src/util/blake3/blake3_impl.h
           sed -i '/^#if BLAKE3_USE_NEON == 1/a void blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out);' src/util/blake3/blake3_impl.h
           
-          if [ "${{matrix.arch}}" = "aarch64" ]; then
-            # For aarch64, replace the entire NEON section with a static implementation
-            sed -i '/^#if BLAKE3_USE_NEON == 1/,/^#endif/c\#if BLAKE3_USE_NEON == 1\nstatic void blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out) {\n  blake3_hash_many_portable(inputs, num_inputs, blocks, key, counter, increment_counter, flags, flags_start, flags_end, out);\n}\n#endif' src/util/blake3/blake3_dispatch.c
-          else
-            # For arm32, use the original fix
-            sed -i '/^#if BLAKE3_USE_NEON == 1/,/^#endif/c\#if BLAKE3_USE_NEON == 1\nvoid blake3_hash_many_neon(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out) {\n  blake3_hash_many_portable(inputs, num_inputs, blocks, key, counter, increment_counter, flags, flags_start, flags_end, out);\n}\n#endif' src/util/blake3/blake3_dispatch.c
-          fi
+          # Replace the NEON implementation with a pointer to the portable implementation
+          sed -i '/^#if BLAKE3_USE_NEON == 1/,/^#endif/c\#if BLAKE3_USE_NEON == 1\ntypedef void (*blake3_hash_many_fn)(const uint8_t *const *inputs, size_t num_inputs, size_t blocks, const uint32_t key[8], uint64_t counter, bool increment_counter, uint8_t flags, uint8_t flags_start, uint8_t flags_end, uint8_t *out);\nstatic const blake3_hash_many_fn blake3_hash_many_neon = blake3_hash_many_portable;\n#endif' src/util/blake3/blake3_dispatch.c
           
           # Add missing include to panvk_android.c
           sed -i '/#include <stdlib.h>/a #include <string.h>' src/panfrost/vulkan/panvk_android.c
