@@ -37,7 +37,9 @@ jobs:
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
           
-          # Add missing include directly
+          # Apply patches
+          sed -i '/#define UNDEFINED/i\  NEON = 1 << 7,' src/util/blake3/blake3_dispatch.c
+          sed -i '/^#endif/i\#if defined(__ARM_NEON) || defined(__aarch64__)\n#define BLAKE3_USE_NEON 1\n#else\n#define BLAKE3_USE_NEON 0\n#endif' src/util/blake3/blake3_dispatch.c
           sed -i '/#include <stdlib.h>/a #include <string.h>' src/panfrost/vulkan/panvk_android.c
           
           # Rest of the build process
