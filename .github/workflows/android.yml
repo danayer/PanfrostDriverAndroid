@@ -1,7 +1,9 @@
 name: Build Android
 
 on:
-  [push, pull_request, workflow_dispatch]
+  schedule:
+    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+  workflow_dispatch:  # Allows manual triggering
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -36,7 +38,7 @@ jobs:
           cd mesa
           
           # Rest of the build process
-          envsubst <../android-drm-${{matrix.arch}} >build-crossfile-drm
+          envsubst <$GITHUB_WORKSPACE/android-drm-${{matrix.arch}} >build-crossfile-drm
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
           cd drm
           meson setup "build-android" \
@@ -53,7 +55,7 @@ jobs:
             -Detnaviv=disabled
           ninja -C "build-android" install
           cd ..
-          envsubst <android-${{matrix.arch}} >build-crossfile
+          envsubst <$GITHUB_WORKSPACE/android-${{matrix.arch}} >build-crossfile
           meson setup "build-android" \
             --prefix=/tmp/pan \
             --cross-file "build-crossfile" \
