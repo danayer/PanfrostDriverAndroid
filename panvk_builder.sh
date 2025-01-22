@@ -127,10 +127,45 @@ patch_to_description() {
 }
 
 build_lib_for_android(){
-    # ...existing code...
-    
+    echo "Creating meson cross file ..." $'\n'
+    if [ -z "${ANDROID_NDK_LATEST_HOME}" ]; then
+        ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
+    else    
+        ndk="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+    fi
+
+    cat <<EOF >"android-aarch64"
+[binaries]
+ar = '$ndk/llvm-ar'
+c = ['ccache', '$ndk/aarch64-linux-android$sdkver-clang']
+cpp = ['ccache', '$ndk/aarch64-linux-android$sdkver-clang++', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
+c_ld = 'lld'
+cpp_ld = 'lld'
+strip = '$ndk/aarch64-linux-android-strip'
+pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=NDKDIR/pkgconfig', '/usr/bin/pkg-config']
+[host_machine]
+system = 'android'
+cpu_family = 'aarch64'
+cpu = 'armv8'
+endian = 'little'
+EOF
+
     echo "Generating build files ..." $'\n'
-    meson build-android-aarch64 --cross-file "$workdir"/mesa/android-aarch64 -Dbuildtype=release -Dplatforms=android -Dplatform-sdk-version=$sdkver -Dandroid-stub=true -Dgallium-drivers= -Dvulkan-drivers=panfrost -Dvulkan-beta=true -Dpanfrost-kmds=kgsl -Db_lto=true &> "$workdir"/meson_log
+    meson setup build-android-aarch64 \
+        --cross-file "$workdir"/mesa/android-aarch64 \
+        -Dbuildtype=release \
+        -Dplatforms=android \
+        -Dplatform-sdk-version=$sdkver \
+        -Dandroid-stub=true \
+        -Dgallium-drivers= \
+        -Dvulkan-drivers=panfrost \
+        -Dpanfrost-kmds=kgsl \
+        -Dvulkan-beta=true \
+        -Dbuild-aco-tests=false \
+        -Dandroid-libbacktrace=disabled \
+        -Db_lto=true \
+        -Dc_args="-Wno-error" \
+        -Dcpp_args="-Wno-error" &> "$workdir"/meson_log
 
     echo "Compiling build files ..." $'\n'
     ninja -C build-android-aarch64 &> "$workdir"/ninja_log
@@ -138,6 +173,15 @@ build_lib_for_android(){
 
 port_lib_for_adrenotool(){
     echo "Using patchelf to match soname ..."  $'\n'
+    
+    # Check if library exists
+    if [ ! -f "$workdir/mesa/build-android-aarch64/src/panfrost/vulkan/libvulkan_panfrost.so" ]; then
+        echo -e "$red Build failed - libvulkan_panfrost.so not found! $nocolor"
+        echo "Contents of build directory:"
+        ls -R "$workdir/mesa/build-android-aarch64"
+        exit 1
+    fi
+
     cp "$workdir"/mesa/build-android-aarch64/src/panfrost/vulkan/libvulkan_panfrost.so "$workdir"
     cd "$workdir"
     patchelf --set-soname vulkan.mali.so libvulkan_panfrost.so
