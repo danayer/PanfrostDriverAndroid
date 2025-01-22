@@ -161,12 +161,30 @@ build_lib_for_android(){
     
     curl -L "https://gitlab.freedesktop.org/mesa/drm/-/raw/main/xf86drm.h" -o "$workdir/include/libdrm/xf86drm.h"
 
+    # Update drm.h include path in xf86drm.h
+    sed -i 's|<drm.h>|"drm/drm.h"|g' "$workdir/include/libdrm/xf86drm.h"
+
     # Create drm_types.h with missing type definitions
     cat <<EOF >"$workdir/include/libdrm/drm/drm_types.h"
 #ifndef _DRM_TYPES_H_
 #define _DRM_TYPES_H_
 
 #include <stdint.h>
+
+typedef struct _drmDevice {
+    char **nodes;
+    int available_nodes;
+    int bustype;
+    union {
+        struct {
+            uint16_t vendor;
+            uint16_t device;
+            uint16_t subsystem_vendor;
+            uint16_t subsystem_device;
+            uint8_t revision;
+        } pci;
+    } businfo;
+} drmDevice, *drmDevicePtr;
 
 typedef unsigned int drm_handle_t;
 typedef unsigned int drm_context_t;
@@ -175,8 +193,8 @@ typedef unsigned int drm_magic_t;
 #endif /* _DRM_TYPES_H_ */
 EOF
 
-    # Add include for drm_types.h to xf86drm.h
-    sed -i '1a #include <drm/drm_types.h>' "$workdir/include/libdrm/xf86drm.h"
+    # Add include for drm_types.h to drm.h
+    sed -i '1i #include "drm_types.h"' "$workdir/include/libdrm/drm/drm.h"
 
     # Create pkgconfig directory and libdrm.pc file
     mkdir -p "$workdir/pkgconfig"
