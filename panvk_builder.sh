@@ -383,8 +383,10 @@ int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device) {
         *device = calloc(1, sizeof(drmDevice));
         if (*device) {
             (*device)->bustype = DRM_BUS_PCI;
-            (*device)->businfo.type = DRM_BUS_PCI;
-            memset(&(*device)->businfo.pci, 0, sizeof(struct drm_pci_bus_info));
+            (*device)->businfo.pciDomain = 0;
+            (*device)->businfo.pciBus = 0;
+            (*device)->businfo.pciDevice = 0;
+            (*device)->businfo.pciFunction = 0;
         }
     }
     return -1; 
