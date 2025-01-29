@@ -2,14 +2,14 @@ name: Cleanup Old Releases
 
 on:
   schedule:
-    - cron: '0 0 */3 * *'  # Run every 3 days
-  workflow_dispatch:        # Allow manual trigger
+    - cron: '0 0 */3 * *'
+  workflow_dispatch:
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
     permissions:
-      contents: write      # Needed for deleting releases
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -17,19 +17,31 @@ jobs:
         
       - name: Delete old releases
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
           BRANCH: ${{ github.ref_name }}
         run: |
+          # Ensure we have access to GitHub CLI
+          gh auth status || exit 1
+          
+          echo "Fetching releases for branch: $BRANCH"
+          
           # Get all releases for current branch
-          releases=$(gh release list --limit 999 | grep "$BRANCH" | awk '{print $1}')
+          if ! releases=$(gh release list --repo "$REPO" --limit 999 | grep "$BRANCH" | awk '{print $1}'); then
+            echo "No releases found or error occurred"
+            exit 0
+          fi
           
           # Count releases
           count=$(echo "$releases" | wc -l)
+          echo "Found $count releases"
           
           # If more than 1 release exists, delete all except the newest
           if [ "$count" -gt 1 ]; then
             echo "$releases" | tail -n +2 | while read release; do
               echo "Deleting release: $release"
-              gh release delete "$release" -y
+              gh release delete "$release" --repo "$REPO" -y || echo "Failed to delete $release"
             done
+          else
+            echo "No old releases to clean up"
           fi
