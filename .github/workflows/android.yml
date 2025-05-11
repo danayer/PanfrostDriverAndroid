@@ -24,7 +24,7 @@ jobs:
       - name: Build
         run: |
           sudo apt update
-          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev glslang-tools libclc-dev
+          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev glslang-tools libclc-15-dev
           pip3 install mako
           
           # Setup Android NDK
