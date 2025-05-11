@@ -76,7 +76,10 @@ jobs:
             -Dgallium-va=disabled \
             -Dgallium-vdpau=disabled \
             -Dlmsensors=disabled \
-            -Dgles-lib-suffix=_mesa
+            -Dgles-lib-suffix=_mesa \
+            -Dgallium-rusticl=false \
+            -Dstatic-libclc=[] \
+            -Dmicrosoft-clc=disabled
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v4
