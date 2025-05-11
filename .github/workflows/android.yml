@@ -94,8 +94,8 @@ jobs:
             -Dgles-lib-suffix=_mesa \
             -Dvideo-codecs=[] \
             -Dprecomp-compiler=enabled \
-            -Dintel-clc=disabled \
-            -Dmesa-clc=disabled \
+            -Dintel-clc=system \
+            -Dmesa-clc=system \
             -Dgallium-rusticl=false \
             -Dbuild-tests=false \
             -Dtools=[]
