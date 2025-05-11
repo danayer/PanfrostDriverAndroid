@@ -73,7 +73,6 @@ jobs:
             -Dglvnd=disabled \
             -Dvulkan-drivers=panfrost,virtio \
             -Dgallium-drivers=softpipe,virgl,panfrost \
-            -Dopencl=disabled \
             -Dgallium-va=disabled \
             -Dgallium-vdpau=disabled \
             -Dlmsensors=disabled \
