@@ -46,9 +46,14 @@ jobs:
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
           
-          # Disable Panfrost CLC by modifying meson_options.txt instead of patching
-          # This approach is more reliable than trying to patch files that might change
-          echo 'with_clc = false' > custom_options.ini
+          # Create a properly formatted Meson options file to disable Panfrost CLC
+          cat > custom_options.ini << EOF
+[built-in options]
+c_args = []
+
+[properties]
+with_clc = false
+EOF
           
           # Create a pkgconfig file for libclc
           mkdir -p .pkgconfig
