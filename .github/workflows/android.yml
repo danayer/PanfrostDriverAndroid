@@ -46,23 +46,9 @@ jobs:
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
           
-          # Patch to disable panfrost_clc which breaks cross-compilation
-          cat > panfrost_clc.patch << EOF
-          diff --git a/src/panfrost/meson.build b/src/panfrost/meson.build
-          index xxxxxxx..xxxxxxx 100644
-          --- a/src/panfrost/meson.build
-          +++ b/src/panfrost/meson.build
-          @@ -7,7 +7,7 @@
-           subdir('util')
-           subdir('shared')
-           
-          -if with_clc
-          +if false # Skip Panfrost CLC to avoid cross-compilation issues
-             subdir('clc')
-           endif
-           
-          EOF
-          patch -p1 < panfrost_clc.patch
+          # Disable Panfrost CLC by modifying meson_options.txt instead of patching
+          # This approach is more reliable than trying to patch files that might change
+          echo 'with_clc = false' > custom_options.ini
           
           # Create a pkgconfig file for libclc
           mkdir -p .pkgconfig
@@ -101,6 +87,7 @@ jobs:
           meson setup "build-android" \
             --prefix=/tmp/pan \
             --cross-file "build-crossfile" \
+            --native-file=custom_options.ini \
             -Dplatforms=android \
             -Dplatform-sdk-version=34 \
             -Dandroid-stub=true \
