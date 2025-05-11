@@ -93,7 +93,11 @@ jobs:
             -Dlmsensors=disabled \
             -Dgles-lib-suffix=_mesa \
             -Dvideo-codecs=[] \
-            -Dprecomp-compiler=auto
+            -Dprecomp-compiler=enabled \
+            -Dintel-clc=system \
+            -Dmesa-clc=system \
+            -Dbuild-tests=false \
+            -Dtools=[]
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v4
