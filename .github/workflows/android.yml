@@ -86,16 +86,17 @@ jobs:
             -Dgles1=enabled \
             -Dgles2=enabled \
             -Dglvnd=disabled \
-            -Dvulkan-drivers=panfrost \
-            -Dgallium-drivers=panfrost \
+            -Dvulkan-drivers=panfrost,virtio \
+            -Dgallium-drivers=panfrost,virgl,zink \
             -Dgallium-va=disabled \
             -Dgallium-vdpau=disabled \
             -Dlmsensors=disabled \
             -Dgles-lib-suffix=_mesa \
             -Dvideo-codecs=[] \
             -Dprecomp-compiler=enabled \
-            -Dintel-clc=system \
-            -Dmesa-clc=system \
+            -Dintel-clc=disabled \
+            -Dmesa-clc=disabled \
+            -Dgallium-rusticl=false \
             -Dbuild-tests=false \
             -Dtools=[]
           ninja -C "build-android" install
