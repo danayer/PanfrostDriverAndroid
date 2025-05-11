@@ -71,14 +71,12 @@ jobs:
             -Dgles1=enabled \
             -Dgles2=enabled \
             -Dglvnd=disabled \
-            -Dosmesa=true \
             -Dvulkan-drivers=panfrost,virtio \
             -Dgallium-drivers=softpipe,virgl,panfrost \
-            -Dgallium-opencl=disabled \
+            -Dopencl=disabled \
             -Dgallium-va=disabled \
             -Dgallium-vdpau=disabled \
             -Dlmsensors=disabled \
-            -Dshared-glapi=enabled \
             -Dgles-lib-suffix=_mesa
           ninja -C "build-android" install
       - name: Upload libraries
