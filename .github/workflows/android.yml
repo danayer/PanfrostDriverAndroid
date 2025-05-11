@@ -81,7 +81,7 @@ jobs:
             -Dstatic-libclc=[] \
             -Dmicrosoft-clc=disabled \
             -Dvideo-codecs=[] \
-            -Dprecomp-compiler=disabled
+            -Dprecomp-compiler=system
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v4
