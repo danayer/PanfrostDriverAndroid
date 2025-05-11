@@ -72,14 +72,16 @@ jobs:
             -Dgles2=enabled \
             -Dglvnd=disabled \
             -Dvulkan-drivers=panfrost,virtio \
-            -Dgallium-drivers=softpipe,virgl,panfrost \
+            -Dgallium-drivers=panfrost \
             -Dgallium-va=disabled \
             -Dgallium-vdpau=disabled \
             -Dlmsensors=disabled \
             -Dgles-lib-suffix=_mesa \
             -Dgallium-rusticl=false \
             -Dstatic-libclc=[] \
-            -Dmicrosoft-clc=disabled
+            -Dmicrosoft-clc=disabled \
+            -Dvideo-codecs=[] \
+            -Dprecomp-compiler=disabled
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v4
