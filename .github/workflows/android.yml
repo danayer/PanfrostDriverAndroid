@@ -33,11 +33,13 @@ jobs:
           export ANDROID_NDK_HOME=$PWD/android-ndk-r27c
           export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
           
-          # Create dummy mesa_clc script
+          # Create dummy scripts needed for build
           mkdir -p $HOME/bin
           echo '#!/bin/sh' > $HOME/bin/mesa_clc
           echo 'exit 0' >> $HOME/bin/mesa_clc
-          chmod +x $HOME/bin/mesa_clc
+          echo '#!/bin/sh' > $HOME/bin/vtn_bindgen2
+          echo 'exit 0' >> $HOME/bin/vtn_bindgen2
+          chmod +x $HOME/bin/mesa_clc $HOME/bin/vtn_bindgen2
           export PATH=$HOME/bin:$PATH
           
           # Clone Mesa repository
