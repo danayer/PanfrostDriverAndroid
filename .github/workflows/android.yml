@@ -24,7 +24,7 @@ jobs:
       - name: Build
         run: |
           sudo apt update
-          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev glslang-tools
+          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev glslang-tools libclc-dev
           pip3 install mako
           
           # Setup Android NDK
@@ -36,6 +36,21 @@ jobs:
           # Clone Mesa repository
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
+          
+          # Create a pkgconfig file for libclc
+          mkdir -p .pkgconfig
+          cat > .pkgconfig/libclc.pc << EOF
+          prefix=/usr
+          libdir=/usr/lib/x86_64-linux-gnu
+          includedir=/usr/include
+          
+          Name: libclc
+          Description: Library requirements of the OpenCL C programming language
+          Version: 0.2.0
+          Libs:
+          Cflags:
+          EOF
+          export PKG_CONFIG_PATH=$PWD/.pkgconfig:$PKG_CONFIG_PATH
           
           # Rest of the build process
           envsubst <$GITHUB_WORKSPACE/android-drm-${{matrix.arch}} >build-crossfile-drm
@@ -71,17 +86,14 @@ jobs:
             -Dgles1=enabled \
             -Dgles2=enabled \
             -Dglvnd=disabled \
-            -Dvulkan-drivers=panfrost,virtio \
+            -Dvulkan-drivers=panfrost \
             -Dgallium-drivers=panfrost \
             -Dgallium-va=disabled \
             -Dgallium-vdpau=disabled \
             -Dlmsensors=disabled \
             -Dgles-lib-suffix=_mesa \
-            -Dgallium-rusticl=false \
-            -Dstatic-libclc=[] \
-            -Dmicrosoft-clc=disabled \
             -Dvideo-codecs=[] \
-            -Dprecomp-compiler=system
+            -Dprecomp-compiler=auto
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v4
